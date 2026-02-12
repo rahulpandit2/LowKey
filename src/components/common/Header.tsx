@@ -1,29 +1,43 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
-import Icon from "@/components/ui/AppIcon";
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import Icon from '@/components/ui/AppIcon';
 
 export default function Header() {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const navLinks = [
-    { id: "nav_about", label: "About", href: "/about" },
-    { id: "nav_features", label: "Features", href: "/product-features" },
-    { id: "nav_how_it_works", label: "How It Works", href: "/homepage#how-it-works" },
-    { id: "nav_community", label: "Community", href: "/community-directory" },
-    { id: "nav_help", label: "Help", href: "/help" },
-    { id: "nav_admin", label: "Admin", href: "/admin" },
-    { id: "nav_settings", label: "Settings", href: "/settings" },
+    { id: 'nav_about', label: 'About', href: '/about' },
+    { id: 'nav_features', label: 'Features', href: '/features' },
+    { id: 'nav_how_it_works', label: 'How It Works', href: '/#how-it-works' },
+    { id: 'nav_community', label: 'Community', href: '/communities' },
+    { id: 'nav_guidelines', label: 'Guidelines', href: '/guidelines' },
+    { id: 'nav_help', label: 'Help', href: '/help' },
   ];
 
   return (
-    <header className="fixed z-50 w-full top-0 mix-blend-difference">
+    <header
+      className={`fixed z-50 w-full top-0 transition-all duration-300 ${
+        isScrolled
+          ? 'bg-black/80 backdrop-blur-md border-b border-white/[0.08]'
+          : 'mix-blend-difference'
+      }`}
+    >
       <nav className="w-full px-6 md:px-12 h-24 flex items-center justify-between">
         {/* Logo */}
-        <Link href="/homepage" className="flex items-center gap-3 group">
+        <Link href="/" className="flex items-center gap-3 group">
           <span className="font-serif font-medium text-xl tracking-tight text-white group-hover:opacity-70 transition-opacity">
             LowKey
           </span>
@@ -36,13 +50,13 @@ export default function Header() {
               key={link?.id}
               href={link?.href}
               className={`hover:text-white transition-colors duration-300 relative group ${
-                pathname === link?.href ? "text-white" : ""
+                pathname === link?.href ? 'text-white' : ''
               }`}
             >
               {link?.label}
               <span
                 className={`absolute -bottom-1 left-0 h-[1px] bg-white transition-all duration-300 ${
-                  pathname === link?.href ? "w-full" : "w-0 group-hover:w-full"
+                  pathname === link?.href ? 'w-full' : 'w-0 group-hover:w-full'
                 }`}
               ></span>
             </Link>
@@ -71,7 +85,7 @@ export default function Header() {
           className="md:hidden text-white"
           aria-label="Toggle menu"
         >
-          <Icon name={mobileMenuOpen ? "XMarkIcon" : "Bars3Icon"} size={24} variant="outline" />
+          <Icon name={mobileMenuOpen ? 'XMarkIcon' : 'Bars3Icon'} size={24} variant="outline" />
         </button>
       </nav>
       {/* Mobile Menu */}
@@ -84,7 +98,7 @@ export default function Header() {
                 href={link?.href}
                 onClick={() => setMobileMenuOpen(false)}
                 className={`hover:text-white transition-colors ${
-                  pathname === link?.href ? "text-white" : ""
+                  pathname === link?.href ? 'text-white' : ''
                 }`}
               >
                 {link?.label}

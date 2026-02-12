@@ -43,6 +43,20 @@ nextjs/
 
 ```
 
+## 🔐 Admin Access
+
+This application includes protected administration interfaces:
+
+### Server Admin
+- **Path:** `/server-admin`
+- **Purpose:** System overview, user management, and moderation dashboard.
+- **Access:** Restricted to authorized personnel only.
+
+### Community Admin
+- **Path:** `/communities/[handle]/admin`
+- **Purpose:** Manage community settings, members, and content.
+- **Example:** `/communities/design-ethics/admin`
+
 ## 🧩 Page Editing
 
 You can start editing the page by modifying `src/app/page.tsx`. The page auto-updates as you edit the file.
