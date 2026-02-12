@@ -346,7 +346,7 @@ CREATE TABLE communities (
   description     TEXT,
   icon_url        TEXT,
   banner_url      TEXT,
-  owner_id        UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+  owner_id        UUID REFERENCES users(id) ON DELETE SET NULL,
   visibility      community_visibility NOT NULL DEFAULT 'public',
   join_type       community_join_type NOT NULL DEFAULT 'open',
   status          community_status NOT NULL DEFAULT 'active',
