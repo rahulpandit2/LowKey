@@ -5,21 +5,13 @@ export default function ProfilePage() {
   const isMe = true; // Mock
 
   return (
-    <div className="pb-20">
-      {/* Cover Image */}
-      <div className="h-48 bg-gradient-to-r from-zinc-800 to-zinc-900 border-b border-white/10 relative">
-        {isMe && (
-          <button className="absolute top-4 right-4 bg-black/50 p-2 rounded-full hover:bg-black/80 transition-colors">
-            <Icon name="PhotoIcon" size={20} className="text-white" />
-          </button>
-        )}
-      </div>
-
-      <div className="max-w-4xl mx-auto px-6">
-        {/* Header */}
-        <div className="relative -mt-16 mb-8 flex flex-col md:flex-row items-end md:items-center justify-between gap-4">
-          <div className="flex items-end gap-6">
-            <div className="w-32 h-32 rounded-full bg-zinc-800 border-4 border-black overflow-hidden relative group">
+    <main className="min-h-screen bg-background">
+      {/* Profile Header */}
+      <div className="py-32 px-6 md:px-12 border-b border-white/[0.08] text-center">
+        <div className="max-w-4xl mx-auto">
+          {/* Avatar */}
+          <div className="flex justify-center mb-8">
+            <div className="w-32 h-32 rounded-full bg-zinc-800 border-2 border-white/[0.08] overflow-hidden relative group">
               <div className="w-full h-full bg-gradient-to-br from-zinc-700 to-zinc-600"></div>
               {isMe && (
                 <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
@@ -27,54 +19,89 @@ export default function ProfilePage() {
                 </div>
               )}
             </div>
-            <div className="mb-2">
-              <h1 className="text-2xl font-bold text-white">Rahul Pandit</h1>
-              <p className="text-zinc-400">@rahulpandit</p>
+          </div>
+
+          <h1 className="text-5xl md:text-7xl font-serif text-white mb-4 leading-tight">
+            Rahul <span className="text-zinc-600 italic">Pandit</span>
+          </h1>
+          <p className="text-lg text-zinc-400 font-light mb-8">@rahulpandit</p>
+          <p className="text-lg text-zinc-400 font-light max-w-2xl mx-auto leading-relaxed mb-10">
+            Building the internet I want to see. Less noise, more signal. Currently working on LowKey.
+          </p>
+
+          {/* Stats */}
+          <div className="flex gap-12 justify-center mb-10">
+            <div>
+              <p className="text-2xl font-serif text-white">142</p>
+              <p className="text-xs text-zinc-500 uppercase tracking-widest mt-1">Following</p>
+            </div>
+            <div>
+              <p className="text-2xl font-serif text-white">8.5k</p>
+              <p className="text-xs text-zinc-500 uppercase tracking-widest mt-1">Followers</p>
+            </div>
+            <div>
+              <p className="text-2xl font-serif text-white">56</p>
+              <p className="text-xs text-zinc-500 uppercase tracking-widest mt-1">Posts</p>
             </div>
           </div>
 
-          <div className="flex gap-3 mb-2">
-            <button className="px-6 py-2 border border-white/20 rounded-full text-sm font-medium hover:bg-white hover:text-black transition-colors">
+          {/* Actions */}
+          <div className="flex gap-4 justify-center">
+            <button className="px-10 py-3 bg-white hover:bg-zinc-200 text-black text-sm font-semibold uppercase tracking-[0.2em] transition-all">
               Edit Profile
             </button>
-            <button className="p-2 border border-white/20 rounded-full hover:bg-white hover:text-black transition-colors">
-              <Icon name="ShareIcon" size={20} />
+            <button className="px-6 py-3 border border-white/20 hover:border-white text-white text-sm font-semibold uppercase tracking-[0.2em] transition-all">
+              Share
             </button>
           </div>
         </div>
+      </div>
 
-        {/* Bio & Stats */}
-        <div className="mb-12">
-          <p className="text-zinc-300 max-w-lg leading-relaxed mb-6">
-            Building the internet I want to see. Less noise, more signal. Currently working on
-            LowKey.
-          </p>
-          <div className="flex gap-6 text-sm">
-            <div className="flex gap-1">
-              <span className="font-bold text-white">142</span>
-              <span className="text-zinc-500">Following</span>
-            </div>
-            <div className="flex gap-1">
-              <span className="font-bold text-white">8.5k</span>
-              <span className="text-zinc-500">Followers</span>
-            </div>
-          </div>
+      {/* Content Tabs */}
+      <div className="max-w-4xl mx-auto px-6 md:px-12 py-12">
+        <div className="flex gap-12 border-b border-white/[0.08] mb-12">
+          <button className="pb-4 text-white border-b-2 border-white text-sm font-semibold uppercase tracking-[0.2em]">Posts</button>
+          <button className="pb-4 text-zinc-500 hover:text-white text-sm font-semibold uppercase tracking-[0.2em] transition-colors">Replies</button>
+          <button className="pb-4 text-zinc-500 hover:text-white text-sm font-semibold uppercase tracking-[0.2em] transition-colors">Saved</button>
         </div>
 
-        {/* Tabs */}
-        <div className="flex gap-8 border-b border-white/10 mb-8">
-          <button className="pb-4 text-white border-b-2 border-white font-medium">Posts</button>
-          <button className="pb-4 text-zinc-500 hover:text-white transition-colors">Replies</button>
-          <button className="pb-4 text-zinc-500 hover:text-white transition-colors">Media</button>
-          <button className="pb-4 text-zinc-500 hover:text-white transition-colors">Likes</button>
-        </div>
-
-        {/* Content Placeholder */}
-        <div className="py-12 text-center border border-dashed border-white/10 rounded-xl">
-          <p className="text-zinc-500 mb-2">No posts yet</p>
-          <p className="text-xs text-zinc-600">But lots of potential.</p>
+        {/* Post Cards */}
+        <div className="space-y-8">
+          {[1, 2, 3].map((post) => (
+            <article key={post} className="border border-white/[0.05] p-8 hover:border-white/10 transition-colors">
+              <div className="flex items-center gap-3 mb-4">
+                <span className="text-xs text-zinc-500 uppercase tracking-widest">
+                  {post === 1 ? 'Thought' : post === 2 ? 'Achievement' : 'Dilemma'}
+                </span>
+                <span className="text-zinc-700">·</span>
+                <span className="text-xs text-zinc-600">2 days ago</span>
+              </div>
+              <h3 className="text-xl font-serif text-white mb-3 leading-tight">
+                {post === 1
+                  ? 'The ethics of infinite scroll patterns'
+                  : post === 2
+                    ? 'Shipped the first version of LowKey'
+                    : 'Open source vs. funded startup'}
+              </h3>
+              <p className="text-zinc-400 font-light leading-relaxed mb-6">
+                {post === 1
+                  ? 'Just finished reading a paper on how intermittent variable rewards trigger dopamine loops. We really need to rethink how we design feed interfaces...'
+                  : post === 2
+                    ? 'After months of iteration, the first version is live. No ads, no metrics, no manipulation. Just honest conversation.'
+                    : 'Weighing the trade-offs between building in public with community ownership vs. taking funding to move faster...'}
+              </p>
+              <div className="flex items-center gap-6 text-zinc-500 text-sm">
+                <button className="flex items-center gap-2 hover:text-white transition-colors">
+                  <Icon name="ChatBubbleLeftIcon" size={16} /> 12
+                </button>
+                <button className="flex items-center gap-2 hover:text-white transition-colors">
+                  <Icon name="BookmarkIcon" size={16} /> Save
+                </button>
+              </div>
+            </article>
+          ))}
         </div>
       </div>
-    </div>
+    </main>
   );
 }

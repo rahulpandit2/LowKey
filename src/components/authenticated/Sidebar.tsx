@@ -13,6 +13,8 @@ export default function Sidebar() {
     { label: 'Notifications', href: '/notifications', icon: 'BellIcon' },
     { label: 'Messages', href: '/messages', icon: 'EnvelopeIcon' },
     { label: 'Communities', href: '/communities', icon: 'UserGroupIcon' },
+    { label: 'Bookmarks', href: '/bookmarks', icon: 'BookmarkIcon' },
+    { label: 'Post Manager', href: '/post-manager', icon: 'DocumentTextIcon' },
     { label: 'Profile', href: '/profile', icon: 'UserIcon' },
     { label: 'Settings', href: '/settings', icon: 'Cog6ToothIcon' },
   ];
@@ -32,11 +34,10 @@ export default function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-4 px-4 py-3 rounded-lg transition-all duration-200 group ${
-                isActive
+              className={`flex items-center gap-4 px-4 py-3 rounded-lg transition-all duration-200 group ${isActive
                   ? 'bg-white text-black font-medium'
                   : 'text-zinc-400 hover:text-white hover:bg-white/5'
-              }`}
+                }`}
             >
               <Icon
                 name={item.icon}

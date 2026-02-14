@@ -971,4 +971,21 @@ BEGIN
 END;
 $$;
 
+-- ──────────────────────────────────────────────────────────────────────────────
+-- CONTACT SUBMISSIONS
+-- ──────────────────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS contact_submissions (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  first_name    TEXT NOT NULL,
+  last_name     TEXT,
+  email         TEXT NOT NULL,
+  reason        TEXT DEFAULT 'query',
+  subject       TEXT,
+  message       TEXT NOT NULL,
+  status        TEXT DEFAULT 'new',
+  responded_at  TIMESTAMPTZ,
+  created_at    TIMESTAMPTZ DEFAULT now(),
+  updated_at    TIMESTAMPTZ DEFAULT now()
+);
+
 COMMIT;

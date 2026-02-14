@@ -1,0 +1,48 @@
+import { withAuth, apiSuccess } from '@/lib/middleware';
+import { getOne } from '@/lib/db';
+import { Profile } from '@/types';
+
+export const GET = withAuth(async (_req, { user }) => {
+    // Get full profile
+    const profile = await getOne<Profile>(
+        `SELECT * FROM profiles WHERE user_id = $1`,
+        [user.id]
+    );
+
+    // Get follower/following counts
+    const counts = await getOne<{ followers: string; following: string }>(
+        `SELECT
+       (SELECT COUNT(*) FROM follows WHERE following_id = $1) AS followers,
+       (SELECT COUNT(*) FROM follows WHERE follower_id = $1) AS following`,
+        [user.id]
+    );
+
+    return apiSuccess({
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        status: user.status,
+        onboarding_completed: user.onboarding_completed,
+        created_at: user.created_at,
+        profile: profile
+            ? {
+                display_name: profile.display_name,
+                bio: profile.bio,
+                avatar_url: profile.avatar_url,
+                location: profile.location,
+                website: profile.website,
+                default_post_visibility: profile.default_post_visibility,
+                allow_dms_from: profile.allow_dms_from,
+                show_points: profile.show_points,
+                show_badges: profile.show_badges,
+                show_achievements: profile.show_achievements,
+                points_balance: profile.points_balance,
+                locale: profile.locale,
+                timezone: profile.timezone,
+            }
+            : null,
+        followers: parseInt(counts?.followers || '0'),
+        following: parseInt(counts?.following || '0'),
+    });
+});

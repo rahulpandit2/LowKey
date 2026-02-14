@@ -16,6 +16,7 @@ export default function ServerAdminLayout({ children }: { children: React.ReactN
 
   const navItems = [
     { label: 'Overview', href: '/server-admin/overview', icon: 'ChartBarIcon' },
+    { label: 'Messages', href: '/server-admin/messages', icon: 'EnvelopeIcon' },
     { label: 'Users', href: '/server-admin/users', icon: 'UsersIcon' },
     { label: 'Communities', href: '/server-admin/communities', icon: 'UserGroupIcon' },
     { label: 'Moderation', href: '/server-admin/moderation', icon: 'ShieldExclamationIcon' },
@@ -54,8 +55,8 @@ export default function ServerAdminLayout({ children }: { children: React.ReactN
                   key={item.href}
                   href={item.href}
                   className={`flex items-center gap-3 px-3 py-2 text-sm font-medium rounded transition-colors ${isActive
-                      ? 'bg-white/10 text-white'
-                      : 'text-zinc-400 hover:text-white hover:bg-white/5'
+                    ? 'bg-white/10 text-white'
+                    : 'text-zinc-400 hover:text-white hover:bg-white/5'
                     }`}
                 >
                   <Icon name={item.icon} size={18} className={isActive ? 'text-white' : 'text-zinc-500'} />
