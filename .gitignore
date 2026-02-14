@@ -39,3 +39,4 @@ turbo/
 # Ignore tests
 /src/db/test-db.ts
 /src/db/test-results.txt
+/context/realTimeFeedback.md
