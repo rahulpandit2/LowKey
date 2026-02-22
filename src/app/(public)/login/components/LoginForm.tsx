@@ -14,21 +14,45 @@ export default function LoginForm() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     setIsHydrated(true);
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isHydrated) return;
 
     setIsLoading(true);
-    // Simulate login
-    setTimeout(() => {
+    setError('');
+
+    try {
+      const login = loginMethod === 'email' ? email : handle;
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ login, password }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || 'Invalid credentials');
+        return;
+      }
+
+      // Redirect based on role
+      if (data.role === 'admin') {
+        window.location.href = '/server-admin/overview';
+      } else {
+        // Full page reload so the layout re-evaluates auth
+        window.location.href = '/feed';
+      }
+    } catch {
+      setError('Network error. Please try again.');
+    } finally {
       setIsLoading(false);
-      alert('Login successful (prototype - no backend)');
-    }, 1500);
+    }
   };
 
   const isFormValid = () => {
@@ -62,23 +86,27 @@ export default function LoginForm() {
       <div className="flex gap-2 mb-8 p-1 bg-zinc-900 border border-white/[0.05] rounded-sm">
         <button
           onClick={() => setLoginMethod('email')}
-          className={`flex-1 py-3 text-sm font-medium uppercase tracking-[0.2em] rounded-sm transition-all ${
-            loginMethod === 'email' ? 'bg-white text-black' : 'text-zinc-500 hover:text-white'
-          }`}
+          className={`flex-1 py-3 text-sm font-medium uppercase tracking-[0.2em] rounded-sm transition-all ${loginMethod === 'email' ? 'bg-white text-black' : 'text-zinc-500 hover:text-white'
+            }`}
         >
           Email
         </button>
         <button
           onClick={() => setLoginMethod('handle')}
-          className={`flex-1 py-3 text-sm font-medium uppercase tracking-[0.2em] rounded-sm transition-all ${
-            loginMethod === 'handle' ? 'bg-white text-black' : 'text-zinc-500 hover:text-white'
-          }`}
+          className={`flex-1 py-3 text-sm font-medium uppercase tracking-[0.2em] rounded-sm transition-all ${loginMethod === 'handle' ? 'bg-white text-black' : 'text-zinc-500 hover:text-white'
+            }`}
         >
           Handle
         </button>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Error Message */}
+        {error && (
+          <div className="p-4 border border-red-500/20 bg-red-500/5 rounded-sm">
+            <p className="text-sm text-red-400">{error}</p>
+          </div>
+        )}
         {/* Email or Handle Input */}
         {loginMethod === 'email' ? (
           <div>

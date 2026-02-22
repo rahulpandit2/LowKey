@@ -19,7 +19,7 @@ export default function CTASection() {
             Get Started
           </Link>
           <Link
-            href="/community-directory"
+            href="/communities"
             className="px-12 py-4 border border-white/20 hover:border-white text-white text-sm font-semibold uppercase tracking-[0.2em] transition-all rounded-none flex items-center justify-center"
           >
             Explore Communities

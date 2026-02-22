@@ -1,0 +1,9 @@
+HTTP/1.1 201 Created
+vary: RSC, Next-Router-State-Tree, Next-Router-Prefetch, Next-Router-Segment-Prefetch
+content-type: application/json
+set-cookie: lk_session=932e5d9955295e007669f13c493d385d556950fbc8c024200be069cf4a1a5991; Path=/; Expires=Mon, 16 Mar 2026 11:25:39 GMT; Max-Age=2592000; HttpOnly; SameSite=lax
+Date: Sat, 14 Feb 2026 11:25:39 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+Transfer-Encoding: chunked
+

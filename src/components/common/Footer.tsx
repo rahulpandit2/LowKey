@@ -4,14 +4,14 @@ import Icon from '@/components/ui/AppIcon';
 export default function Footer() {
   const footerLinks = [
     { id: 'footer_about', label: 'About', href: '/about' },
-    { id: 'footer_privacy', label: 'Privacy', href: '/about#privacy' },
-    { id: 'footer_policy', label: 'Community Policy', href: '/about#policy' },
-    { id: 'footer_contact', label: 'Contact', href: '/about#contact' },
+    { id: 'footer_privacy', label: 'Privacy', href: '/privacy-policy' },
+    { id: 'footer_policy', label: 'Community Policy', href: '/guidelines' },
+    { id: 'footer_contact', label: 'Contact', href: '/contact' },
   ];
 
   const socialLinks = [
-    { id: 'social_github', name: 'GitHub', icon: 'CodeBracketIcon', href: '#' },
-    { id: 'social_twitter', name: 'Twitter', icon: 'ChatBubbleLeftIcon', href: '#' },
+    { id: 'social_github', name: 'GitHub', icon: 'CodeBracketIcon', href: 'https://github.com/thegoodinternet' },
+    { id: 'social_twitter', name: 'Twitter', icon: 'ChatBubbleLeftIcon', href: 'https://x.com/lowkeyapp' },
   ];
 
   return (

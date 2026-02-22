@@ -134,7 +134,7 @@ export default function CommunitySection() {
         {/* CTA */}
         <div className="mt-12 text-center">
           <a
-            href="/community-directory"
+            href="/communities"
             className="inline-flex items-center gap-2 text-sm text-white hover:text-primary transition-colors"
           >
             Explore All Communities

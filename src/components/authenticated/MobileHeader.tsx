@@ -50,7 +50,7 @@ export default function MobileHeader() {
               Messages
             </Link>
             <Link
-              href="/communities"
+              href="/my-communities"
               onClick={() => setIsOpen(false)}
               className="text-xl font-medium text-zinc-400"
             >

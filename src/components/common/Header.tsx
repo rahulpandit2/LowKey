@@ -9,6 +9,10 @@ export default function Header() {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [user, setUser] = useState<{ 
+    username: string; 
+    profile?: { display_name?: string } 
+  } | null>(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -16,6 +20,15 @@ export default function Header() {
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data?.data) setUser(data.data);
+      })
+      .catch(() => { });
   }, []);
 
   const navLinks = [
@@ -29,11 +42,10 @@ export default function Header() {
 
   return (
     <header
-      className={`fixed z-50 w-full top-0 transition-all duration-300 ${
-        isScrolled
+      className={`fixed z-50 w-full top-0 transition-all duration-300 ${isScrolled
           ? 'bg-black/80 backdrop-blur-md border-b border-white/[0.08]'
           : 'mix-blend-difference'
-      }`}
+        }`}
     >
       <nav className="w-full px-6 md:px-12 h-24 flex items-center justify-between">
         {/* Logo */}
@@ -49,34 +61,48 @@ export default function Header() {
             <Link
               key={link?.id}
               href={link?.href}
-              className={`hover:text-white transition-colors duration-300 relative group ${
-                pathname === link?.href ? 'text-white' : ''
-              }`}
+              className={`hover:text-white transition-colors duration-300 relative group ${pathname === link?.href ? 'text-white' : ''
+                }`}
             >
               {link?.label}
               <span
-                className={`absolute -bottom-1 left-0 h-[1px] bg-white transition-all duration-300 ${
-                  pathname === link?.href ? 'w-full' : 'w-0 group-hover:w-full'
-                }`}
+                className={`absolute -bottom-1 left-0 h-[1px] bg-white transition-all duration-300 ${pathname === link?.href ? 'w-full' : 'w-0 group-hover:w-full'
+                  }`}
               ></span>
             </Link>
           ))}
         </div>
 
-        {/* CTA Buttons */}
+        {/* CTA Buttons or User Profile */}
         <div className="hidden md:flex items-center gap-4">
-          <Link
-            href="/login"
-            className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white hover:text-zinc-300 transition-all"
-          >
-            Sign In
-          </Link>
-          <Link
-            href="/signup"
-            className="text-[10px] font-semibold uppercase tracking-[0.2em] bg-white text-black px-8 py-3 hover:bg-zinc-300 transition-all rounded-none"
-          >
-            Sign Up
-          </Link>
+          {user ? (
+            <Link
+              href="/feed"
+              className="flex items-center gap-3 group"
+            >
+              <div className="w-8 h-8 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-sm font-medium text-white">
+                {(user.profile?.display_name || user.username).charAt(0).toUpperCase()}
+              </div>
+              <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white group-hover:text-zinc-300 transition-all">
+                {user.profile?.display_name || `@${user.username}`}
+              </span>
+            </Link>
+          ) : (
+            <>
+              <Link
+                href="/login"
+                className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white hover:text-zinc-300 transition-all"
+              >
+                Sign In
+              </Link>
+              <Link
+                href="/signup"
+                className="text-[10px] font-semibold uppercase tracking-[0.2em] bg-white text-black px-8 py-3 hover:bg-zinc-300 transition-all rounded-none"
+              >
+                Sign Up
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Mobile Menu Button */}
@@ -97,9 +123,8 @@ export default function Header() {
                 key={link?.id}
                 href={link?.href}
                 onClick={() => setMobileMenuOpen(false)}
-                className={`hover:text-white transition-colors ${
-                  pathname === link?.href ? 'text-white' : ''
-                }`}
+                className={`hover:text-white transition-colors ${pathname === link?.href ? 'text-white' : ''
+                  }`}
               >
                 {link?.label}
               </Link>

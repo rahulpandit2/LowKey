@@ -31,7 +31,7 @@ export const GET = withAuth(async (req, { user }) => {
     const communities = await getMany(
         `SELECT c.*,
        EXISTS(SELECT 1 FROM community_members WHERE community_id = c.id AND user_id = $1) AS is_member,
-       (SELECT role FROM community_members WHERE community_id = c.id AND user_id = $1) AS user_role
+       (SELECT role FROM community_members WHERE community_id = c.id AND user_id = $1) AS role
      FROM communities c
      WHERE c.status = 'active' AND c.deleted_at IS NULL
        ${whereClause}
@@ -40,7 +40,7 @@ export const GET = withAuth(async (req, { user }) => {
         params
     );
 
-    return apiSuccess(communities);
+    return apiSuccess({ communities });
 });
 
 // POST /api/communities — create a community

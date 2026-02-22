@@ -4,18 +4,22 @@ import { Profile } from '@/types';
 
 export const GET = withAuth(async (_req, { user }) => {
     // Get full profile
+    console.log('[Auth/Me] Fetching profile for user', user.id);
     const profile = await getOne<Profile>(
         `SELECT * FROM profiles WHERE user_id = $1`,
         [user.id]
     );
+    console.log('[Auth/Me] Profile fetched:', profile ? 'found' : 'null');
 
     // Get follower/following counts
+    console.log('[Auth/Me] Fetching counts');
     const counts = await getOne<{ followers: string; following: string }>(
         `SELECT
        (SELECT COUNT(*) FROM follows WHERE following_id = $1) AS followers,
        (SELECT COUNT(*) FROM follows WHERE follower_id = $1) AS following`,
         [user.id]
     );
+    console.log('[Auth/Me] Counts fetched:', counts);
 
     return apiSuccess({
         id: user.id,

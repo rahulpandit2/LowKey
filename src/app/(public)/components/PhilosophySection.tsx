@@ -8,6 +8,12 @@ export default function PhilosophySection() {
         {/* Quote Side */}
         <div className="relative group">
           <div className="aspect-[3/4] overflow-hidden bg-zinc-900 relative rounded-sm border border-white/[0.05]">
+            {/* Founder Image */}
+            <img 
+              src="/assets/images/founder.jpg" 
+              alt="Rahul Pandit - Founder" 
+              className="absolute inset-0 w-full h-full object-cover"
+            />
             <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80"></div>
             <div className="absolute bottom-8 left-8 right-8">
               <p className="text-white text-2xl md:text-3xl font-serif italic mb-4">

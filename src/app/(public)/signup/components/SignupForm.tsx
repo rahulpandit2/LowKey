@@ -14,32 +14,56 @@ export default function SignupForm() {
   const [handleAvailable, setHandleAvailable] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     setIsHydrated(true);
   }, []);
 
-  const checkHandleAvailability = (value: string) => {
+  const checkHandleAvailability = async (value: string) => {
     if (value.length < 3) {
       setHandleAvailable(null);
       return;
     }
-    // Simulate availability check
-    setTimeout(() => {
-      setHandleAvailable(value.length >= 3 && !value.includes('admin'));
-    }, 300);
+    try {
+      const res = await fetch(`/api/users/check-username?username=${encodeURIComponent(value)}`);
+      if (res.ok) {
+        const data = await res.json();
+        setHandleAvailable(data.data?.available || false);
+      } else {
+        setHandleAvailable(null);
+      }
+    } catch {
+      setHandleAvailable(null);
+    }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isHydrated) return;
 
     setIsLoading(true);
-    // Simulate signup
-    setTimeout(() => {
+    setError('');
+
+    try {
+      const res = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: handle, email, password }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || 'Could not create account. Try again.');
+        return;
+      }
+
+      window.location.href = '/feed';
+    } catch {
+      setError('Network error. Please try again.');
+    } finally {
       setIsLoading(false);
-      alert('Account created successfully (prototype - no backend)');
-    }, 1500);
+    }
   };
 
   const isFormValid = () => {
@@ -82,6 +106,12 @@ export default function SignupForm() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Error Message */}
+        {error && (
+          <div className="p-4 border border-red-500/20 bg-red-500/5 rounded-sm">
+            <p className="text-sm text-red-400">{error}</p>
+          </div>
+        )}
         {/* Email Input */}
         <div>
           <label htmlFor="email" className="block text-sm text-zinc-400 mb-2">
@@ -206,11 +236,11 @@ export default function SignupForm() {
           />
           <label htmlFor="terms" className="text-xs text-zinc-500">
             I agree to the{' '}
-            <Link href="/about#policy" className="text-primary hover:text-primary/80">
+            <Link href="/guidelines" className="text-primary hover:text-primary/80">
               Community Policy
             </Link>{' '}
             and{' '}
-            <Link href="/about#privacy" className="text-primary hover:text-primary/80">
+            <Link href="/privacy-policy" className="text-primary hover:text-primary/80">
               Privacy Policy
             </Link>
           </label>

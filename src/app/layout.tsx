@@ -1,6 +1,7 @@
 import React from 'react';
 import type { Metadata, Viewport } from 'next';
 import '../styles/index.css';
+import ToastProvider from '@/components/ui/ToastProvider';
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -8,8 +9,11 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: 'Next.js with Tailwind CSS',
-  description: 'A boilerplate project with Next.js and Tailwind CSS',
+  title: {
+    default: 'LowKey — The Good Internet',
+    template: '%s | LowKey',
+  },
+  description: 'A calm, privacy-first social platform for thoughtful engagement. Share thoughts, solve problems, and reflect — without the noise.',
   icons: {
     icon: [{ url: '/favicon.ico', type: 'image/x-icon' }],
   },
@@ -23,14 +27,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        {children}
-
-        <script
-          type="module"
-          async
-          src="https://static.rocket.new/rocket-web.js?_cfg=https%3A%2F%2Flowkey4989back.builtwithrocket.new&_be=https%3A%2F%2Fappanalytics.rocket.new&_v=0.1.17"
-        />
-        <script type="module" defer src="https://static.rocket.new/rocket-shot.js?v=0.0.2" />
+        <ToastProvider>
+          {children}
+        </ToastProvider>
       </body>
     </html>
   );

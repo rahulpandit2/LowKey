@@ -106,23 +106,33 @@ export default function OnboardingPage() {
             <h1 className="text-3xl font-serif">Your First Post.</h1>
             <p className="text-zinc-400">Share a thought, a problem, or an achievement.</p>
 
-            <textarea
-              className="w-full h-40 bg-zinc-900 border border-white/10 p-4 text-white placeholder-zinc-600 focus:outline-none focus:border-white/30 transition-colors rounded-lg resize-none"
-              placeholder="What's on your mind? (Don't overthink it.)"
-            ></textarea>
+            <div className="text-center py-12">
+              <Icon name="PencilSquareIcon" size={48} className="text-zinc-600 mx-auto mb-4" />
+              <p className="text-zinc-500 mb-6">
+                Ready to share your first post? Use our composer to craft something meaningful.
+              </p>
+              <Link
+                href="/post-composer?onboarding=true"
+                className="inline-block px-8 py-4 bg-white text-black font-bold uppercase tracking-[0.1em] text-sm hover:bg-zinc-200 transition-colors"
+              >
+                Open Composer
+              </Link>
+            </div>
 
-            <Link
-              href="/feed"
-              className="block w-full py-4 bg-white text-black font-bold uppercase tracking-widest hover:bg-zinc-200 transition-colors text-center"
-            >
-              Post & Finish
-            </Link>
-            <button
-              onClick={() => setStep(2)}
-              className="w-full py-4 text-zinc-500 hover:text-white uppercase tracking-widest"
-            >
-              Back
-            </button>
+            <div className="flex gap-4">
+              <button
+                onClick={() => setStep(2)}
+                className="flex-1 py-4 text-zinc-500 hover:text-white uppercase tracking-widest border border-white/10 hover:border-white/30 transition-colors"
+              >
+                Back
+              </button>
+              <Link
+                href="/feed"
+                className="flex-1 py-4 text-center text-zinc-400 hover:text-white uppercase tracking-widest border border-white/10 hover:border-white/30 transition-colors"
+              >
+                Skip for Now
+              </Link>
+            </div>
           </div>
         )}
       </div>

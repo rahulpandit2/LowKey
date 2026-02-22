@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
 import { feed as feedApi } from '@/lib/api';
@@ -17,6 +17,8 @@ type FeedPost = {
   author_username: string;
   author_display_name: string | null;
   author_avatar_url: string | null;
+  has_reacted?: boolean;
+  is_bookmarked?: boolean;
 };
 
 const FILTERS = [
@@ -47,8 +49,11 @@ export default function FeedPage() {
   const [activeFilter, setActiveFilter] = useState('all');
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [loading, setLoading] = useState(true);
+  // Track per-post interaction state
+  const [reacted, setReacted] = useState<Set<string>>(new Set());
+  const [bookmarked, setBookmarked] = useState<Set<string>>(new Set());
 
-  useEffect(() => {
+  const loadFeed = useCallback(() => {
     setLoading(true);
     feedApi.get({ filter: activeFilter }).then((res) => {
       if (res.data) {
@@ -57,6 +62,49 @@ export default function FeedPage() {
       setLoading(false);
     });
   }, [activeFilter]);
+
+  useEffect(() => { loadFeed(); }, [loadFeed]);
+
+  // Optimistic reaction toggle
+  const toggleReact = async (postId: string) => {
+    const wasReacted = reacted.has(postId);
+    // Optimistic UI
+    setReacted((prev) => {
+      const next = new Set(prev);
+      wasReacted ? next.delete(postId) : next.add(postId);
+      return next;
+    });
+    setPosts((prev) => prev.map((p) => p.id === postId
+      ? { ...p, reaction_count: p.reaction_count + (wasReacted ? -1 : 1) }
+      : p
+    ));
+
+    // API call
+    if (wasReacted) {
+      await fetch(`/api/posts/${postId}/reactions?reaction=interesting`, { method: 'DELETE' });
+    } else {
+      await fetch(`/api/posts/${postId}/reactions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reaction: 'interesting' }),
+      });
+    }
+  };
+
+  // Optimistic bookmark toggle
+  const toggleBookmark = async (postId: string) => {
+    const wasBookmarked = bookmarked.has(postId);
+    setBookmarked((prev) => {
+      const next = new Set(prev);
+      wasBookmarked ? next.delete(postId) : next.add(postId);
+      return next;
+    });
+    await fetch(`/api/posts/${postId}/bookmarks`, {
+      method: wasBookmarked ? 'DELETE' : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+  };
+
 
   return (
     <div className="max-w-2xl mx-auto py-12 px-6">
@@ -76,8 +124,8 @@ export default function FeedPage() {
             key={f.key}
             onClick={() => setActiveFilter(f.key)}
             className={`px-5 py-3 text-xs uppercase tracking-widest transition-colors whitespace-nowrap border-b-2 ${activeFilter === f.key
-                ? 'text-white border-white'
-                : 'text-zinc-500 border-transparent hover:text-white hover:border-white/30'
+              ? 'text-white border-white'
+              : 'text-zinc-500 border-transparent hover:text-white hover:border-white/30'
               }`}
           >
             {f.label}
@@ -166,18 +214,28 @@ export default function FeedPage() {
 
                 {/* Actions */}
                 <div className="flex items-center gap-8 text-zinc-600">
-                  <button className="flex items-center gap-2 hover:text-white transition-colors text-xs">
-                    <Icon name="HeartIcon" size={16} />
+                  <button
+                    onClick={() => toggleReact(post.id)}
+                    className={`flex items-center gap-2 transition-colors text-xs ${reacted.has(post.id) ? 'text-red-400 hover:text-red-300' : 'hover:text-white'}`}
+                  >
+                    <Icon name={reacted.has(post.id) ? 'HeartIcon' : 'HeartIcon'} size={16} />
                     <span>{post.reaction_count || ''}</span>
                   </button>
-                  <button className="flex items-center gap-2 hover:text-white transition-colors text-xs">
+                  <Link href={`/post/${post.id}`} className="flex items-center gap-2 hover:text-white transition-colors text-xs">
                     <Icon name="ChatBubbleLeftIcon" size={16} />
                     <span>{post.feedback_count || ''}</span>
-                  </button>
-                  <button className="flex items-center gap-2 hover:text-white transition-colors text-xs">
+                  </Link>
+                  <button
+                    onClick={() => toggleBookmark(post.id)}
+                    className={`flex items-center gap-2 transition-colors text-xs ${bookmarked.has(post.id) ? 'text-amber-400 hover:text-amber-300' : 'hover:text-white'}`}
+                  >
                     <Icon name="BookmarkIcon" size={16} />
                   </button>
-                  <button className="ml-auto hover:text-white transition-colors text-xs">
+                  <button
+                    onClick={() => navigator.clipboard.writeText(`${window.location.origin}/post/${post.id}`)}
+                    className="ml-auto hover:text-white transition-colors text-xs"
+                    title="Copy link"
+                  >
                     <Icon name="ShareIcon" size={16} />
                   </button>
                 </div>

@@ -1,114 +1,114 @@
 'use client';
-import Icon from '@/components/ui/AppIcon';
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+
+type Stats = {
+  users: { total: number; active: number; banned: number; new_today: number; admins: number };
+  posts: { total: number; today: number };
+  communities: { total: number; active: number };
+  reports: { total: number; pending: number };
+  sessions: { active: number };
+  recent_actions: { action_type: string; target_type: string; created_at: string; admin_username: string }[];
+};
+
+function timeAgo(date: string) {
+  const s = Math.floor((Date.now() - new Date(date).getTime()) / 1000);
+  if (s < 60) return 'just now';
+  if (s < 3600) return `${Math.floor(s / 60)}m ago`;
+  if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
+  return `${Math.floor(s / 86400)}d ago`;
+}
 
 export default function AdminOverviewPage() {
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/server-admin/stats')
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => { if (d?.data) setStats(d.data); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, []);
+
+  const statCards = stats ? [
+    { label: 'Total Users', value: stats.users.total.toLocaleString(), sub: `+${stats.users.new_today} today`, href: '/server-admin/users' },
+    { label: 'Active Users', value: stats.users.active.toLocaleString(), sub: `${stats.users.banned} banned`, href: '/server-admin/users?filter=active' },
+    { label: 'Total Posts', value: stats.posts.total.toLocaleString(), sub: `${stats.posts.today} today`, href: null },
+    { label: 'Communities', value: stats.communities.total.toLocaleString(), sub: `${stats.communities.active} active`, href: '/server-admin/communities' },
+    { label: 'Pending Reports', value: stats.reports.pending.toLocaleString(), sub: `${stats.reports.total} total`, href: '/server-admin/moderation' },
+    { label: 'Active Sessions', value: stats.sessions.active.toLocaleString(), sub: `${stats.users.admins} admins`, href: '/server-admin/security' },
+  ] : [];
+
   return (
     <div className="p-8">
-      <header className="mb-8">
-        <h1 className="text-2xl font-bold text-white mb-2">System Overview</h1>
-        <p className="text-zinc-500 text-sm">Real-time platform metrics.</p>
+      <header className="mb-10">
+        <div className="flex items-center gap-4 mb-3">
+          <div className="w-6 h-[1px] bg-white/20" />
+          <span className="text-[10px] tracking-[0.3em] uppercase text-zinc-600">Administration</span>
+        </div>
+        <h1 className="font-serif text-3xl text-white">Dashboard</h1>
+        <p className="text-zinc-500 text-sm mt-1">Platform-wide statistics and recent activity.</p>
       </header>
 
-      {/* Metrics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
-        <div className="bg-zinc-900 border border-white/5 p-6 rounded-xl">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-zinc-400 text-xs uppercase tracking-widest font-bold">
-              Total Users
-            </h3>
-            <Icon name="UsersIcon" size={20} className="text-zinc-600" />
-          </div>
-          <p className="text-3xl font-mono text-white">8,492</p>
-          <p className="text-green-500 text-xs mt-2 flex items-center gap-1">
-            <Icon name="ArrowTrendingUpIcon" size={12} />
-            +12% vs last week
-          </p>
+      {loading ? (
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-10">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="border border-white/[0.05] p-6 animate-pulse">
+              <div className="h-3 bg-white/5 rounded w-1/2 mb-3" />
+              <div className="h-7 bg-white/5 rounded w-1/3 mb-2" />
+              <div className="h-2 bg-white/5 rounded w-2/3" />
+            </div>
+          ))}
         </div>
-
-        <div className="bg-zinc-900 border border-white/5 p-6 rounded-xl">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-zinc-400 text-xs uppercase tracking-widest font-bold">
-              Active Reports
-            </h3>
-            <Icon name="FlagIcon" size={20} className="text-red-900" />
-          </div>
-          <p className="text-3xl font-mono text-white">14</p>
-          <p className="text-red-500 text-xs mt-2">Requires attention</p>
+      ) : (
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-10">
+          {statCards.map((card) => {
+            const inner = (
+              <div className={`border border-white/[0.05] p-6 transition-all ${card.href ? 'hover:border-white/20 cursor-pointer' : ''}`}>
+                <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-600 mb-3">{card.label}</p>
+                <p className="font-serif text-3xl text-white mb-1">{card.value}</p>
+                <p className="text-xs text-zinc-600">{card.sub}</p>
+              </div>
+            );
+            return card.href ? (
+              <Link key={card.label} href={card.href}>{inner}</Link>
+            ) : (
+              <div key={card.label}>{inner}</div>
+            );
+          })}
         </div>
+      )}
 
-        <div className="bg-zinc-900 border border-white/5 p-6 rounded-xl">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-zinc-400 text-xs uppercase tracking-widest font-bold">
-              Server Load
-            </h3>
-            <Icon name="ServerStackIcon" size={20} className="text-zinc-600" />
-          </div>
-          <p className="text-3xl font-mono text-white">24%</p>
-          <p className="text-zinc-500 text-xs mt-2">Healthy</p>
-        </div>
-
-        <div className="bg-zinc-900 border border-white/5 p-6 rounded-xl">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-zinc-400 text-xs uppercase tracking-widest font-bold">
-              Incognito Rate
-            </h3>
-            <Icon name="ShieldCheckIcon" size={20} className="text-indigo-900" />
-          </div>
-          <p className="text-3xl font-mono text-white">68%</p>
-          <p className="text-zinc-500 text-xs mt-2">Of total posts</p>
-        </div>
-      </div>
-
-      {/* Moderation Queue Preview */}
+      {/* Recent Admin Activity */}
       <section>
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-bold text-white">Flagged Content</h2>
-          <button className="text-xs text-zinc-400 hover:text-white uppercase tracking-widest">
-            View All
-          </button>
-        </div>
-
-        <div className="bg-zinc-900 border border-white/5 rounded-xl overflow-hidden">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-white/5 text-zinc-400 uppercase tracking-wider text-xs border-b border-white/5">
-              <tr>
-                <th className="px-6 py-4 font-bold">Report ID</th>
-                <th className="px-6 py-4 font-bold">Reason</th>
-                <th className="px-6 py-4 font-bold">Severity</th>
-                <th className="px-6 py-4 font-bold">Time</th>
-                <th className="px-6 py-4 font-bold">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5 text-zinc-300">
-              <tr className="hover:bg-white/5 transition-colors">
-                <td className="px-6 py-4 font-mono text-zinc-500">#REP-9281</td>
-                <td className="px-6 py-4">Harassment</td>
-                <td className="px-6 py-4">
-                  <span className="px-2 py-1 bg-red-900/30 text-red-500 rounded text-xs font-bold uppercase">
-                    High
+        <h2 className="text-xs uppercase tracking-[0.25em] text-zinc-500 mb-4 pb-2 border-b border-white/[0.05]">
+          Recent Admin Activity
+        </h2>
+        {loading ? (
+          <div className="space-y-2">
+            {[1, 2, 3].map((i) => <div key={i} className="h-10 bg-white/[0.02] animate-pulse" />)}
+          </div>
+        ) : (stats?.recent_actions?.length ?? 0) === 0 ? (
+          <p className="text-zinc-600 text-sm py-6">No admin actions recorded yet.</p>
+        ) : (
+          <div className="divide-y divide-white/[0.04]">
+            {stats?.recent_actions?.map((a, i) => (
+              <div key={i} className="py-3 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <span className="text-[10px] uppercase tracking-widest text-zinc-600 w-24">{a.action_type}</span>
+                  <span className="text-sm text-zinc-400">
+                    <span className="text-white">@{a.admin_username}</span>
+                    {' acted on '}{a.target_type.replace('_', ' ')}
                   </span>
-                </td>
-                <td className="px-6 py-4">2m ago</td>
-                <td className="px-6 py-4">
-                  <button className="text-white hover:underline">Review</button>
-                </td>
-              </tr>
-              <tr className="hover:bg-white/5 transition-colors">
-                <td className="px-6 py-4 font-mono text-zinc-500">#REP-9280</td>
-                <td className="px-6 py-4">Spam</td>
-                <td className="px-6 py-4">
-                  <span className="px-2 py-1 bg-yellow-900/30 text-yellow-500 rounded text-xs font-bold uppercase">
-                    Low
-                  </span>
-                </td>
-                <td className="px-6 py-4">15m ago</td>
-                <td className="px-6 py-4">
-                  <button className="text-white hover:underline">Review</button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+                </div>
+                <span className="text-xs text-zinc-600">{timeAgo(a.created_at)}</span>
+              </div>
+            ))}
+          </div>
+        )}
+        <Link href="/server-admin/logs" className="text-[10px] uppercase tracking-widest text-zinc-600 hover:text-zinc-400 transition-colors mt-4 inline-block">
+          View all logs →
+        </Link>
       </section>
     </div>
   );

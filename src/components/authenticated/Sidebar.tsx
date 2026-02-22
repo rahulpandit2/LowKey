@@ -1,18 +1,40 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
 import Icon from '@/components/ui/AppIcon';
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data?.data) setUser(data.data);
+      })
+      .catch(() => { });
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+      router.push('/login');
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
 
   const navItems = [
     { label: 'Home', href: '/feed', icon: 'HomeIcon' },
     { label: 'Search', href: '/search', icon: 'MagnifyingGlassIcon' },
     { label: 'Notifications', href: '/notifications', icon: 'BellIcon' },
     { label: 'Messages', href: '/messages', icon: 'EnvelopeIcon' },
-    { label: 'Communities', href: '/communities', icon: 'UserGroupIcon' },
+    { label: 'Communities', href: '/my-communities', icon: 'UserGroupIcon' },
     { label: 'Bookmarks', href: '/bookmarks', icon: 'BookmarkIcon' },
     { label: 'Post Manager', href: '/post-manager', icon: 'DocumentTextIcon' },
     { label: 'Profile', href: '/profile', icon: 'UserIcon' },
@@ -61,18 +83,51 @@ export default function Sidebar() {
       </div>
 
       {/* User Mini Profile (Bottom) */}
-      <div className="mt-8 pt-6 border-t border-white/10 flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-zinc-800 overflow-hidden">
-          {/* Placeholder Avatar */}
-          <div className="w-full h-full bg-gradient-to-br from-zinc-700 to-zinc-900"></div>
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-white truncate">User</p>
-          <p className="text-xs text-zinc-500 truncate">@username</p>
-        </div>
-        <button className="text-zinc-500 hover:text-white">
-          <Icon name="EllipsisHorizontalIcon" size={20} />
+      <div className="mt-8 pt-6 border-t border-white/10 relative">
+        <button
+          onClick={() => setMenuOpen(!menuOpen)}
+          className="flex items-center gap-3 w-full hover:bg-white/5 p-2 rounded-lg transition-colors"
+        >
+          <div className="w-10 h-10 rounded-full bg-zinc-800 overflow-hidden flex items-center justify-center text-white font-medium">
+            {user?.profile?.display_name?.charAt(0).toUpperCase() || user?.username?.charAt(0).toUpperCase() || 'U'}
+          </div>
+          <div className="flex-1 min-w-0 text-left">
+            <p className="text-sm font-medium text-white truncate">
+              {user?.profile?.display_name || user?.username || 'User'}
+            </p>
+            <p className="text-xs text-zinc-500 truncate">@{user?.username || 'username'}</p>
+          </div>
+          <Icon name="EllipsisHorizontalIcon" size={20} className="text-zinc-500" />
         </button>
+
+        {/* Dropdown Menu */}
+        {menuOpen && (
+          <div className="absolute bottom-full left-0 right-0 mb-2 bg-zinc-900 border border-white/10 rounded-lg shadow-xl overflow-hidden">
+            <Link
+              href="/profile"
+              onClick={() => setMenuOpen(false)}
+              className="flex items-center gap-3 px-4 py-3 hover:bg-white/5 transition-colors text-sm text-white"
+            >
+              <Icon name="UserIcon" size={18} className="text-zinc-400" />
+              Profile
+            </Link>
+            <Link
+              href="/settings"
+              onClick={() => setMenuOpen(false)}
+              className="flex items-center gap-3 px-4 py-3 hover:bg-white/5 transition-colors text-sm text-white"
+            >
+              <Icon name="Cog6ToothIcon" size={18} className="text-zinc-400" />
+              Settings
+            </Link>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-3 px-4 py-3 hover:bg-white/5 transition-colors text-sm text-red-400 w-full text-left"
+            >
+              <Icon name="ArrowRightOnRectangleIcon" size={18} className="text-red-400" />
+              Logout
+            </button>
+          </div>
+        )}
       </div>
     </aside>
   );
