@@ -1,11 +1,9 @@
 # Netlify Configuration for Next.js 15 with PostgreSQL
 [build]
   command = "npm run build"
-  publish = ".next"
 
-# Next.js plugin for Netlify
-[[plugins]]
-  package = "@netlify/plugin-nextjs"
+[build.environment]
+  NODE_VERSION = "20"
 
 # Environment variables (set these in Netlify UI for security)
 # Required:
@@ -14,13 +12,6 @@
 # - DB_NAME
 # - DB_USER
 # - DB_PASSWORD
-
-# Redirects for Next.js routing
-[[redirects]]
-  from = "/*"
-  to = "/.netlify/functions/___netlify-handler"
-  status = 200
-  force = false
 
 # Headers for security
 [[headers]]

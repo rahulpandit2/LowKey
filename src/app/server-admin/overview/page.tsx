@@ -80,36 +80,80 @@ export default function AdminOverviewPage() {
       )}
 
       {/* Recent Admin Activity */}
-      <section>
-        <h2 className="text-xs uppercase tracking-[0.25em] text-zinc-500 mb-4 pb-2 border-b border-white/[0.05]">
-          Recent Admin Activity
-        </h2>
-        {loading ? (
-          <div className="space-y-2">
-            {[1, 2, 3].map((i) => <div key={i} className="h-10 bg-white/[0.02] animate-pulse" />)}
-          </div>
-        ) : (stats?.recent_actions?.length ?? 0) === 0 ? (
-          <p className="text-zinc-600 text-sm py-6">No admin actions recorded yet.</p>
-        ) : (
-          <div className="divide-y divide-white/[0.04]">
-            {stats?.recent_actions?.map((a, i) => (
-              <div key={i} className="py-3 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <span className="text-[10px] uppercase tracking-widest text-zinc-600 w-24">{a.action_type}</span>
-                  <span className="text-sm text-zinc-400">
-                    <span className="text-white">@{a.admin_username}</span>
-                    {' acted on '}{a.target_type.replace('_', ' ')}
-                  </span>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+        <section>
+          <h2 className="text-xs uppercase tracking-[0.25em] text-zinc-500 mb-4 pb-2 border-b border-white/[0.05]">
+            Recent Admin Activity
+          </h2>
+          {loading ? (
+            <div className="space-y-2">
+              {[1, 2, 3].map((i) => <div key={i} className="h-10 bg-white/[0.02] animate-pulse" />)}
+            </div>
+          ) : (stats?.recent_actions?.length ?? 0) === 0 ? (
+            <p className="text-zinc-600 text-sm py-6">No admin actions recorded yet.</p>
+          ) : (
+            <div className="divide-y divide-white/[0.04]">
+              {stats?.recent_actions?.map((a, i) => (
+                <div key={i} className="py-3 flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <span className="text-[10px] uppercase tracking-widest text-zinc-600 w-24">{a.action_type}</span>
+                    <span className="text-sm text-zinc-400">
+                      <span className="text-white">@{a.admin_username}</span>
+                      {' acted on '}{a.target_type.replace('_', ' ')}
+                    </span>
+                  </div>
+                  <span className="text-xs text-zinc-600">{timeAgo(a.created_at)}</span>
                 </div>
-                <span className="text-xs text-zinc-600">{timeAgo(a.created_at)}</span>
-              </div>
-            ))}
+              ))}
+            </div>
+          )}
+          <Link href="/server-admin/logs" className="text-[10px] uppercase tracking-widest text-zinc-600 hover:text-zinc-400 transition-colors mt-4 inline-block">
+            View all logs →
+          </Link>
+        </section>
+
+        {/* Demo Data Management */}
+        <section>
+          <h2 className="text-xs uppercase tracking-[0.25em] text-zinc-500 mb-4 pb-2 border-b border-white/[0.05]">
+            Demo Data
+          </h2>
+          <div className="space-y-4">
+            <p className="text-zinc-400 text-sm">
+              Populate the platform with sample users, communities, and posts to preview functionality.
+            </p>
+            <div className="flex gap-4">
+              <button
+                onClick={async () => {
+                  if (!confirm('Insert mock demo data?')) return;
+                  try {
+                    const res = await fetch('/api/admin/demo-data', { method: 'POST' });
+                    const json = await res.json();
+                    alert(json.message || json.error);
+                    if (res.ok) window.location.reload();
+                  } catch (e) { alert('Failed to insert demo data'); }
+                }}
+                className="px-4 py-2 bg-white text-black font-semibold text-sm hover:bg-zinc-200 transition-colors"
+              >
+                Insert Demo Data
+              </button>
+              <button
+                onClick={async () => {
+                  if (!confirm('Delete all demo data? This action cannot be undone.')) return;
+                  try {
+                    const res = await fetch('/api/admin/demo-data', { method: 'DELETE' });
+                    const json = await res.json();
+                    alert(json.message || json.error);
+                    if (res.ok) window.location.reload();
+                  } catch (e) { alert('Failed to purge demo data'); }
+                }}
+                className="px-4 py-2 border border-red-500/50 text-red-500 text-sm hover:bg-red-500/10 transition-colors"
+              >
+                Purge Demo Data
+              </button>
+            </div>
           </div>
-        )}
-        <Link href="/server-admin/logs" className="text-[10px] uppercase tracking-widest text-zinc-600 hover:text-zinc-400 transition-colors mt-4 inline-block">
-          View all logs →
-        </Link>
-      </section>
+        </section>
+      </div>
     </div>
   );
 }
