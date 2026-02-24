@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { NextRequest } from 'next/server';
 import { query, getOne } from '@/lib/db';
 import { hashPassword, createSession, setSessionCookie } from '@/lib/auth';
@@ -89,7 +90,7 @@ export async function POST(req: NextRequest) {
             201
         );
     } catch (error) {
-        console.error('[Admin Setup Error]', error);
+        logger.error('[Admin Setup Error]', error);
         return apiError('Internal server error', 500);
     }
 }
@@ -105,7 +106,7 @@ export async function GET() {
             setup_required: !existingAdmin,
         });
     } catch (error) {
-        console.error('[Admin Setup Check Error]', error);
+        logger.error('[Admin Setup Check Error]', error);
         return apiError('Internal server error', 500);
     }
 }

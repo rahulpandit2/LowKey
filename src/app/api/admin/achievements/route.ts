@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { NextRequest } from 'next/server';
 import { apiSuccess, apiError, withAdmin, parseBody } from '@/lib/middleware';
 import { getMany, query } from '@/lib/db';
@@ -16,7 +17,7 @@ async function getHandler() {
         );
         return apiSuccess({ achievements, badges, pointTasks });
     } catch (error) {
-        console.error('[Admin Achievements List Error]', error);
+        logger.error('[Admin Achievements List Error]', error);
         return apiError('Internal server error', 500);
     }
 }
@@ -78,7 +79,7 @@ async function postHandler(req: NextRequest) {
 
         return apiSuccess(result.rows[0], 201);
     } catch (error) {
-        console.error('[Admin Achievements Create Error]', error);
+        logger.error('[Admin Achievements Create Error]', error);
         return apiError('Internal server error', 500);
     }
 }

@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { NextRequest } from 'next/server';
 import { requireAdmin } from '@/lib/admin-auth';
 import { getOne, query } from '@/lib/db';
@@ -55,7 +56,7 @@ export async function GET(req: NextRequest) {
             pages: Math.ceil(Number(countRow?.count || 0) / limit),
         });
     } catch (error) {
-        console.error('[Admin Communities GET]', error);
+        logger.error('[Admin Communities GET]', error);
         return apiError('Internal server error', 500);
     }
 }
@@ -98,7 +99,7 @@ export async function PATCH(req: NextRequest) {
 
         return apiSuccess({ community_id, action });
     } catch (error) {
-        console.error('[Admin Communities PATCH]', error);
+        logger.error('[Admin Communities PATCH]', error);
         return apiError('Internal server error', 500);
     }
 }

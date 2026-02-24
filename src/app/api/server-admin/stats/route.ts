@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { getCurrentUser } from '@/lib/auth';
 import { getOne } from '@/lib/db';
 import { apiError, apiSuccess } from '@/lib/middleware';
@@ -92,7 +93,7 @@ export async function GET() {
             recent_actions: recentActions,
         });
     } catch (error) {
-        console.error('[Admin Stats Error]', error);
+        logger.error('[Admin Stats Error]', error);
         return apiError('Internal server error', 500);
     }
 }

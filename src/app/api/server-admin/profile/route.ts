@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { NextRequest } from 'next/server';
 import { getCurrentUser, verifyPassword, hashPassword } from '@/lib/auth';
 import { getOne, query } from '@/lib/db';
@@ -32,7 +33,7 @@ export async function GET() {
             is_default: isDefault,
         });
     } catch (error) {
-        console.error('[Admin Profile GET]', error);
+        logger.error('[Admin Profile GET]', error);
         return apiError('Internal server error', 500);
     }
 }
@@ -75,7 +76,7 @@ export async function PATCH(req: NextRequest) {
 
         return apiSuccess({ message: 'Profile updated' });
     } catch (error) {
-        console.error('[Admin Profile PATCH]', error);
+        logger.error('[Admin Profile PATCH]', error);
         return apiError('Internal server error', 500);
     }
 }

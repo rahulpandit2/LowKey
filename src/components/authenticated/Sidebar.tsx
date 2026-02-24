@@ -57,8 +57,8 @@ export default function Sidebar() {
               key={item.href}
               href={item.href}
               className={`flex items-center gap-4 px-4 py-3 rounded-lg transition-all duration-200 group ${isActive
-                  ? 'bg-white text-black font-medium'
-                  : 'text-zinc-400 hover:text-white hover:bg-white/5'
+                ? 'bg-white text-black font-medium'
+                : 'text-zinc-400 hover:text-white hover:bg-white/5'
                 }`}
             >
               <Icon
@@ -119,12 +119,21 @@ export default function Sidebar() {
               <Icon name="Cog6ToothIcon" size={18} className="text-zinc-400" />
               Settings
             </Link>
+            {user?.isAdminActive && (
+              <a
+                href="/server-admin"
+                className="flex items-center gap-3 px-4 py-3 hover:bg-white/5 transition-colors text-sm text-amber-400 w-full text-left border-t border-white/10 mt-1 pt-3"
+              >
+                <Icon name="ShieldCheckIcon" size={18} className="text-amber-400" />
+                Switch to Admin
+              </a>
+            )}
             <button
               onClick={handleLogout}
-              className="flex items-center gap-3 px-4 py-3 hover:bg-white/5 transition-colors text-sm text-red-400 w-full text-left"
+              className={`flex items-center gap-3 px-4 py-3 hover:bg-white/5 transition-colors text-sm text-red-400 w-full text-left ${user?.isAdminActive ? '' : 'border-t border-white/10 mt-1 pt-3'}`}
             >
               <Icon name="ArrowRightOnRectangleIcon" size={18} className="text-red-400" />
-              Logout
+              Logout User
             </button>
           </div>
         )}

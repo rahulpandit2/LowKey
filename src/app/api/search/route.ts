@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { NextRequest } from 'next/server';
 import { apiSuccess, apiError, withAuth } from '@/lib/middleware';
 import { getMany } from '@/lib/db';
@@ -57,7 +58,7 @@ async function handler(req: NextRequest) {
 
         return apiSuccess(results);
     } catch (error) {
-        console.error('[Search Error]', error);
+        logger.error('[Search Error]', error);
         return apiError('Internal server error', 500);
     }
 }

@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { NextRequest, NextResponse } from 'next/server';
 import { query, getOne } from '@/lib/db';
 import { hashPassword, createSession, setSessionCookie } from '@/lib/auth';
@@ -63,7 +64,7 @@ export async function POST(req: NextRequest) {
 
         return apiSuccess({ id: user.id, username: username.toLowerCase() }, 201);
     } catch (error) {
-        console.error('[Signup Error]', error);
+        logger.error('[Signup Error]', error);
         return apiError('Internal server error', 500);
     }
 }

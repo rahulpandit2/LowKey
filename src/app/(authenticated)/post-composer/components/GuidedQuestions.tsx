@@ -1,5 +1,6 @@
 'use client';
 
+
 interface Question {
   id: string;
   text: string;

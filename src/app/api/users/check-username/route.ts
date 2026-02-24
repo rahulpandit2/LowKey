@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { NextRequest } from 'next/server';
 import { getOne } from '@/lib/db';
 import { apiSuccess, apiError } from '@/lib/middleware';
@@ -27,7 +28,7 @@ export async function GET(req: NextRequest) {
             available: !existing,
         });
     } catch (error) {
-        console.error('[Check Username Error]', error);
+        logger.error('[Check Username Error]', error);
         return apiError('Internal server error', 500);
     }
 }

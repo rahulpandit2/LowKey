@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { NextRequest } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
 import { getOne, query } from '@/lib/db';
@@ -28,7 +29,7 @@ export async function GET(req: NextRequest) {
         let where = '';
         let paramIdx = 1;
         if (actionType) {
-            where = `WHERE aa.action_type = $${paramIdx}`;
+            where = `WHERE action_type = $${paramIdx}`;
             params.push(actionType);
             paramIdx++;
         }
@@ -40,19 +41,36 @@ export async function GET(req: NextRequest) {
                 reason: string | null; ip_address: string | null; created_at: string;
                 admin_username: string;
             }>(
-                `SELECT
-           aa.id, aa.action_type, aa.target_type, aa.target_id,
-           aa.reason, aa.ip_address, aa.created_at,
-           u.username AS admin_username
-         FROM admin_actions aa
-         JOIN users u ON u.id = aa.admin_id
-         ${where}
-         ORDER BY aa.created_at DESC
-         LIMIT $${paramIdx} OFFSET $${paramIdx + 1}`,
+                `WITH combined_logs AS (
+                   SELECT
+                     aa.id, aa.action_type, aa.target_type, aa.target_id,
+                     aa.reason, COALESCE(aa.ip_address::text, '') AS ip_address, aa.created_at,
+                     u.username AS admin_username
+                   FROM admin_actions aa
+                   JOIN users u ON u.id = aa.admin_id
+                   
+                   UNION ALL
+                   
+                   SELECT
+                     al.id, al.action AS action_type, al.target_type, al.target_id,
+                     al.metadata->>'level' AS reason, COALESCE(al.ip_address::text, '') AS ip_address, al.created_at,
+                     COALESCE(u.username, 'system') AS admin_username
+                   FROM audit_logs al
+                   LEFT JOIN users u ON u.id = al.user_id
+                 )
+                 SELECT * FROM combined_logs
+                 ${where}
+                 ORDER BY created_at DESC
+                 LIMIT $${paramIdx} OFFSET $${paramIdx + 1}`,
                 params
             ),
             getOne<{ count: number }>(
-                `SELECT COUNT(*) AS count FROM admin_actions aa ${where}`,
+                `WITH combined_logs AS (
+                   SELECT action_type FROM admin_actions
+                   UNION ALL
+                   SELECT action AS action_type FROM audit_logs
+                 )
+                 SELECT COUNT(*) AS count FROM combined_logs ${where}`,
                 params.slice(0, -2)
             ),
         ]);
@@ -64,7 +82,7 @@ export async function GET(req: NextRequest) {
             pages: Math.ceil(Number(countRow?.count || 0) / limit),
         });
     } catch (error) {
-        console.error('[Admin Logs GET]', error);
+        logger.error('[Admin Logs GET]', error);
         return apiError('Internal server error', 500);
     }
 }

@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { NextRequest } from 'next/server';
 import { getOne } from '@/lib/db';
 import { verifyPassword, createSession, setSessionCookie } from '@/lib/auth';
@@ -58,7 +59,7 @@ export async function POST(req: NextRequest) {
             onboarding_completed: user.onboarding_completed,
         });
     } catch (error) {
-        console.error('[Login Error]', error);
+        logger.error('[Login Error]', error);
         return apiError('Internal server error', 500);
     }
 }

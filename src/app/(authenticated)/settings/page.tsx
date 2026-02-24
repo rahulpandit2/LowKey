@@ -1,4 +1,5 @@
 'use client';
+
 import React, { useState, useEffect } from 'react';
 import Icon from '@/components/ui/AppIcon';
 import { settings as settingsApi, auth as authApi } from '@/lib/api';

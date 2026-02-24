@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { NextRequest } from 'next/server';
 import { apiSuccess, apiError, withAdmin, parseBody } from '@/lib/middleware';
 import { query, getMany } from '@/lib/db';
@@ -42,7 +43,7 @@ async function postHandler(req: NextRequest, { user }: { user: { id: string } })
             return apiError('Either user_id or broadcast=true is required', 400);
         }
     } catch (error) {
-        console.error('[Admin Notification Error]', error);
+        logger.error('[Admin Notification Error]', error);
         return apiError('Internal server error', 500);
     }
 }

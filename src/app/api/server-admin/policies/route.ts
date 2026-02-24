@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { NextRequest } from 'next/server';
 import { requireAdmin } from '@/lib/admin-auth';
 import { getOne, query } from '@/lib/db';
@@ -32,7 +33,7 @@ export async function GET() {
             return apiSuccess({ policies: {} });
         }
     } catch (error) {
-        console.error('[Admin Policies GET]', error);
+        logger.error('[Admin Policies GET]', error);
         return apiError('Internal server error', 500);
     }
 }
@@ -71,7 +72,7 @@ export async function POST(req: NextRequest) {
 
         return apiSuccess({ id: newPolicy?.id, message: 'Policy published' }, 201);
     } catch (error) {
-        console.error('[Admin Policies POST]', error);
+        logger.error('[Admin Policies POST]', error);
         return apiError('Internal server error', 500);
     }
 }

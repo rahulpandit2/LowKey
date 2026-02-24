@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { NextRequest } from 'next/server';
 import { apiSuccess, apiError } from '@/lib/middleware';
 import { getMany } from '@/lib/db';
@@ -26,7 +27,7 @@ export async function GET(req: NextRequest) {
         const policies = await getMany(sql, params);
         return apiSuccess(policies);
     } catch (error) {
-        console.error('[Policies Error]', error);
+        logger.error('[Policies Error]', error);
         return apiError('Internal server error', 500);
     }
 }

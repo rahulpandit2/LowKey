@@ -1,5 +1,7 @@
 'use client';
 
+import { logger } from '@/lib/client-logger';
+
 import { useEffect } from 'react';
 
 export default function Error({
@@ -10,7 +12,7 @@ export default function Error({
     reset: () => void;
 }) {
     useEffect(() => {
-        console.error('[LowKey Error]', error);
+        logger.error('[LowKey Error]', error);
     }, [error]);
 
     return (

@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { NextRequest } from 'next/server';
 import { apiSuccess, apiError, withAdmin, parseBody } from '@/lib/middleware';
 import { query, getOne } from '@/lib/db';
@@ -51,7 +52,7 @@ async function putHandler(req: NextRequest, { params }: { user: any; params?: Re
         if (result.rows.length === 0) return apiError('Not found', 404);
         return apiSuccess(result.rows[0]);
     } catch (error) {
-        console.error('[Admin Achievement Update Error]', error);
+        logger.error('[Admin Achievement Update Error]', error);
         return apiError('Internal server error', 500);
     }
 }
@@ -74,7 +75,7 @@ async function deleteHandler(req: NextRequest, { params }: { user: any; params?:
 
         return apiSuccess({ message: 'Deactivated' });
     } catch (error) {
-        console.error('[Admin Achievement Delete Error]', error);
+        logger.error('[Admin Achievement Delete Error]', error);
         return apiError('Internal server error', 500);
     }
 }

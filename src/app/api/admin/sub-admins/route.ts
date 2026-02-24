@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { NextRequest } from 'next/server';
 import { apiSuccess, apiError, withAdmin, parseBody } from '@/lib/middleware';
 import { getMany, query } from '@/lib/db';
@@ -15,7 +16,7 @@ async function getHandler(req: NextRequest, { user }: { user: { id: string; role
         );
         return apiSuccess(admins);
     } catch (error) {
-        console.error('[Sub-Admin List Error]', error);
+        logger.error('[Sub-Admin List Error]', error);
         return apiError('Internal server error', 500);
     }
 }
@@ -54,7 +55,7 @@ async function postHandler(req: NextRequest, { user }: { user: { id: string; rol
 
         return apiSuccess(result.rows[0], 201);
     } catch (error) {
-        console.error('[Sub-Admin Promote Error]', error);
+        logger.error('[Sub-Admin Promote Error]', error);
         return apiError('Internal server error', 500);
     }
 }

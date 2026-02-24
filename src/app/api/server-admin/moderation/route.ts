@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { NextRequest } from 'next/server';
 import { requireAdmin } from '@/lib/admin-auth';
 import { getOne, query } from '@/lib/db';
@@ -54,7 +55,7 @@ export async function GET(req: NextRequest) {
             return apiSuccess({ reports: [], total: 0, page: 1, pages: 0 });
         }
     } catch (error) {
-        console.error('[Admin Moderation GET]', error);
+        logger.error('[Admin Moderation GET]', error);
         return apiError('Internal server error', 500);
     }
 }
@@ -105,7 +106,7 @@ export async function PATCH(req: NextRequest) {
             return apiError('Failed to process report', 500);
         }
     } catch (error) {
-        console.error('[Admin Moderation PATCH]', error);
+        logger.error('[Admin Moderation PATCH]', error);
         return apiError('Internal server error', 500);
     }
 }

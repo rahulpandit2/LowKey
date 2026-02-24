@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { NextRequest } from 'next/server';
 import { cookies } from 'next/headers';
 import { destroySession, clearSessionCookie } from '@/lib/auth';
@@ -15,7 +16,7 @@ export async function POST(req: NextRequest) {
 
         return apiSuccess({ message: 'Logged out' });
     } catch (error) {
-        console.error('[Logout Error]', error);
+        logger.error('[Logout Error]', error);
         return apiError('Internal server error', 500);
     }
 }

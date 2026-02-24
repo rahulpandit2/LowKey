@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { NextRequest } from 'next/server';
 import { requireAdmin } from '@/lib/admin-auth';
 import { getOne, query } from '@/lib/db';
@@ -33,7 +34,7 @@ export async function GET() {
             });
         }
     } catch (error) {
-        console.error('[Admin Settings GET]', error);
+        logger.error('[Admin Settings GET]', error);
         return apiError('Internal server error', 500);
     }
 }
@@ -84,7 +85,7 @@ export async function PATCH(req: NextRequest) {
 
         return apiSuccess({ message: 'Settings saved' });
     } catch (error) {
-        console.error('[Admin Settings PATCH]', error);
+        logger.error('[Admin Settings PATCH]', error);
         return apiError('Internal server error', 500);
     }
 }

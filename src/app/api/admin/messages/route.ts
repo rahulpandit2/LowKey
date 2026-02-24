@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { NextRequest } from 'next/server';
 import { apiSuccess, apiError, withAdmin, parseBody } from '@/lib/middleware';
 import { query } from '@/lib/db';
@@ -43,7 +44,7 @@ async function postHandler(req: NextRequest, { user }: { user: { id: string } })
 
         return apiSuccess({ sent: true, thread_id: threadId }, 201);
     } catch (error) {
-        console.error('[Admin Message Error]', error);
+        logger.error('[Admin Message Error]', error);
         return apiError('Internal server error', 500);
     }
 }

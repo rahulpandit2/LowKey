@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { NextRequest } from 'next/server';
 import { requireAdmin } from '@/lib/admin-auth';
 import { apiError, apiSuccess } from '@/lib/middleware';
@@ -13,7 +14,7 @@ export async function POST(req: NextRequest) {
 
         return apiSuccess({ message: 'Demo data inserted successfully' });
     } catch (error) {
-        console.error('[Demo Insert Error]', error);
+        logger.error('[Demo Insert Error]', error);
         return apiError('Internal server error', 500);
     }
 }
@@ -27,7 +28,7 @@ export async function DELETE(req: NextRequest) {
 
         return apiSuccess({ message: 'Demo data purged successfully' });
     } catch (error) {
-        console.error('[Demo Purge Error]', error);
+        logger.error('[Demo Purge Error]', error);
         return apiError('Internal server error', 500);
     }
 }

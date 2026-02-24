@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { NextRequest } from 'next/server';
 import { apiSuccess, apiError } from '@/lib/middleware';
 import { query } from '@/lib/db';
@@ -35,7 +36,7 @@ export async function POST(req: NextRequest) {
 
         return apiSuccess({ message: 'Your message has been sent. We will get back to you soon.' }, 201);
     } catch (error) {
-        console.error('[Contact Error]', error);
+        logger.error('[Contact Error]', error);
         return apiError('Internal server error', 500);
     }
 }

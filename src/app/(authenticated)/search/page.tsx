@@ -1,4 +1,6 @@
 'use client';
+import { logger } from '@/lib/client-logger';
+
 
 import { useState, useEffect, useCallback } from 'react';
 import Icon from '@/components/ui/AppIcon';
@@ -28,7 +30,7 @@ export default function SearchPage() {
             if (data.data) setResults(data.data);
             setHasSearched(true);
         } catch (e) {
-            console.error(e);
+            logger.error(e);
         } finally {
             setLoading(false);
         }

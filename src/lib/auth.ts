@@ -4,6 +4,7 @@ import { cookies } from 'next/headers';
 import { randomBytes, createHash } from 'crypto';
 
 const SESSION_COOKIE = 'lk_session';
+const SESSION_ADMIN_COOKIE = 'lk_admin_session';
 const SESSION_EXPIRY_DAYS = 30;
 
 // Hash password using pgcrypto's crypt (bcrypt)
@@ -59,10 +60,8 @@ export async function destroySession(token: string): Promise<void> {
     await query(`DELETE FROM sessions WHERE token_hash = $1`, [tokenHash]);
 }
 
-// Get current user from session cookie
-export async function getCurrentUser(): Promise<(User & { profile_id: string }) | null> {
-    const cookieStore = await cookies();
-    const token = cookieStore.get(SESSION_COOKIE)?.value;
+// Get current user from a specific cookie token
+async function getUserFromToken(token: string | undefined): Promise<(User & { profile_id: string }) | null> {
     if (!token) return null;
 
     const tokenHash = hashToken(token);
@@ -81,10 +80,24 @@ export async function getCurrentUser(): Promise<(User & { profile_id: string }) 
 
     if (user) {
         // Update last_active
-        await query(`UPDATE sessions SET last_active_at = NOW() WHERE token_hash = $1`, [tokenHash]);
+        await query(`UPDATE sessions SET last_active_at = NOW() WHERE token_hash = $1`, [tokenHash]).catch(() => { });
     }
 
     return user;
+}
+
+// Get current user from regular session cookie
+export async function getCurrentUser(): Promise<(User & { profile_id: string }) | null> {
+    const cookieStore = await cookies();
+    const token = cookieStore.get(SESSION_COOKIE)?.value;
+    return getUserFromToken(token);
+}
+
+// Get current user from admin session cookie
+export async function getAdminCurrentUser(): Promise<(User & { profile_id: string }) | null> {
+    const cookieStore = await cookies();
+    const token = cookieStore.get(SESSION_ADMIN_COOKIE)?.value;
+    return getUserFromToken(token);
 }
 
 // Set session cookie
@@ -99,8 +112,26 @@ export async function setSessionCookie(token: string): Promise<void> {
     });
 }
 
+// Set admin session cookie
+export async function setAdminSessionCookie(token: string): Promise<void> {
+    const cookieStore = await cookies();
+    cookieStore.set(SESSION_ADMIN_COOKIE, token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+        maxAge: SESSION_EXPIRY_DAYS * 24 * 60 * 60,
+    });
+}
+
 // Clear session cookie
 export async function clearSessionCookie(): Promise<void> {
     const cookieStore = await cookies();
     cookieStore.delete(SESSION_COOKIE);
+}
+
+// Clear admin session cookie
+export async function clearAdminSessionCookie(): Promise<void> {
+    const cookieStore = await cookies();
+    cookieStore.delete(SESSION_ADMIN_COOKIE);
 }

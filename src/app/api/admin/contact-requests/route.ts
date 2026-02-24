@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { NextRequest } from 'next/server';
 import { apiSuccess, apiError, withAdmin, parseBody } from '@/lib/middleware';
 import { getMany } from '@/lib/db';
@@ -20,7 +21,7 @@ async function handler(req: NextRequest) {
 
         return apiSuccess(submissions);
     } catch (error) {
-        console.error('[Admin Contact Requests Error]', error);
+        logger.error('[Admin Contact Requests Error]', error);
         return apiError('Internal server error', 500);
     }
 }

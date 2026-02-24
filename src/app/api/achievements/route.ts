@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { NextRequest } from 'next/server';
 import { apiSuccess, apiError, withAuth } from '@/lib/middleware';
 import { getMany, getOne } from '@/lib/db';
@@ -63,7 +64,7 @@ async function handler(req: NextRequest, { user }: { user: { id: string } }) {
             recentTransactions,
         });
     } catch (error) {
-        console.error('[Achievements Error]', error);
+        logger.error('[Achievements Error]', error);
         return apiError('Internal server error', 500);
     }
 }

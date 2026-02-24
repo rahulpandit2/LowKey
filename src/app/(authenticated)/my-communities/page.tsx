@@ -1,4 +1,6 @@
 'use client';
+import { logger } from '@/lib/client-logger';
+
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -36,7 +38,7 @@ export default function CommunitiesPage() {
         setCommunities(data.data?.communities || []);
       }
     } catch (error) {
-      console.error('Failed to load communities:', error);
+      logger.error('Failed to load communities:', error);
     } finally {
       setLoading(false);
     }

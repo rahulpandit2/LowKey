@@ -1,4 +1,5 @@
-"use client";
+'use client';
+
 import Icon from "@/components/ui/AppIcon";
 
 export default function AdminAutomationPage() {

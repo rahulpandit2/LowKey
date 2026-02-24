@@ -1,6 +1,7 @@
+import { logger } from '@/lib/logger';
 import { NextRequest } from 'next/server';
 import { getOne } from '@/lib/db';
-import { verifyPassword, createSession, setSessionCookie } from '@/lib/auth';
+import { verifyPassword, createSession, setAdminSessionCookie } from '@/lib/auth';
 import { apiError, apiSuccess } from '@/lib/middleware';
 import { User } from '@/types';
 
@@ -56,7 +57,7 @@ export async function POST(req: NextRequest) {
         // Create session
         const ua = req.headers.get('user-agent') || undefined;
         const token = await createSession(user.id, ip || undefined, ua);
-        await setSessionCookie(token);
+        await setAdminSessionCookie(token);
 
         // Log admin login — admin_id references admin_users.id, not users.id
         await getOne(
@@ -73,7 +74,7 @@ export async function POST(req: NextRequest) {
             redirect: '/server-admin/overview',
         });
     } catch (error) {
-        console.error('[Admin Login Error]', error);
+        logger.error('[Admin Login Error]', error);
         return apiError('Internal server error', 500);
     }
 }

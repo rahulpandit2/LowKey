@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { NextRequest } from 'next/server';
 import { apiSuccess, apiError, withAdmin, parseBody } from '@/lib/middleware';
 import { query, getOne } from '@/lib/db';
@@ -41,7 +42,7 @@ async function putHandler(req: NextRequest, { user, params }: { user: { id: stri
 
         return apiSuccess(result.rows[0]);
     } catch (error) {
-        console.error('[Sub-Admin Update Error]', error);
+        logger.error('[Sub-Admin Update Error]', error);
         return apiError('Internal server error', 500);
     }
 }
@@ -72,7 +73,7 @@ async function deleteHandler(req: NextRequest, { user, params }: { user: { id: s
 
         return apiSuccess({ message: 'Admin privileges removed' });
     } catch (error) {
-        console.error('[Sub-Admin Delete Error]', error);
+        logger.error('[Sub-Admin Delete Error]', error);
         return apiError('Internal server error', 500);
     }
 }
