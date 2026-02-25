@@ -34,13 +34,13 @@ export async function GET(req: NextRequest) {
                        COALESCE(u.username, al.metadata->>'identifier', 'anonymous') AS actor
                      FROM audit_logs al
                      LEFT JOIN users u ON u.id = al.user_id
-                     WHERE al.action IN ('login_success', 'login_failure')
+                     WHERE al.action IN ('login_success', 'login_failure', 'logout_success', 'logout_failure')
                      ORDER BY al.created_at DESC
                      LIMIT $1 OFFSET $2`,
                     [limit, offset]
                 ),
                 getOne<{ count: string }>(
-                    `SELECT COUNT(*)::text AS count FROM audit_logs WHERE action IN ('login_success', 'login_failure')`,
+                    `SELECT COUNT(*)::text AS count FROM audit_logs WHERE action IN ('login_success', 'login_failure', 'logout_success', 'logout_failure')`,
                     []
                 ),
             ]);

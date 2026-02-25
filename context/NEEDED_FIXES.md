@@ -67,15 +67,6 @@ Does not work. Shows Internal server error error message
 ## Help
 Non functional
 
-## Swich role
-Works as intended.
-
-## Logout
-Works as intended.
-
-## Login
-Works as intended.
-
 # Public
 Optimize pages with lazy loading behaviour and make the existing elements animate on load but not in a cheap and genaric manner. Remove all unnecessary console.logs. Fix the link to github. It is https://github.com/rahulpandit2/LowKey and the x.com is not real link so remove that. Allow the server admin site settings page to enabel/disable different social media links and add the real link from the server. If the admin does not add a link, it should not be shown.
 

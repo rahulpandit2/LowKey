@@ -69,7 +69,7 @@ export default function AdminLogsPage() {
     useEffect(() => { fetchLogs(); }, [fetchLogs]);
 
     const tabs: { id: Tab; label: string }[] = [
-        { id: 'login_attempts', label: 'Login Attempts' },
+        { id: 'login_attempts', label: 'Auth Events' },
         { id: 'admin_actions', label: 'Admin Actions' },
         { id: 'all', label: 'All Events' },
     ];
@@ -108,7 +108,8 @@ export default function AdminLogsPage() {
                             <tr className="text-[10px] uppercase tracking-widest text-zinc-600">
                                 <th className="px-4 py-3 font-normal whitespace-nowrap">Time</th>
                                 <th className="px-4 py-3 font-normal">Status</th>
-                                <th className="px-4 py-3 font-normal">Type</th>
+                                <th className="px-4 py-3 font-normal">Event</th>
+                                <th className="px-4 py-3 font-normal">Role</th>
                                 <th className="px-4 py-3 font-normal">User</th>
                                 <th className="px-4 py-3 font-normal">IP Address</th>
                                 <th className="px-4 py-3 font-normal hidden md:table-cell">Location</th>
@@ -118,21 +119,29 @@ export default function AdminLogsPage() {
                         <tbody className="divide-y divide-white/[0.03]">
                             {loading ? (
                                 Array(8).fill(0).map((_, i) => (
-                                    <tr key={i}><td colSpan={7} className="px-4 py-4"><div className="h-4 bg-white/[0.03] animate-pulse" /></td></tr>
+                                    <tr key={i}><td colSpan={8} className="px-4 py-4"><div className="h-4 bg-white/[0.03] animate-pulse" /></td></tr>
                                 ))
                             ) : logs.length === 0 ? (
-                                <tr><td colSpan={7} className="px-4 py-12 text-center text-zinc-600 text-sm">No login attempts recorded yet</td></tr>
+                                <tr><td colSpan={8} className="px-4 py-12 text-center text-zinc-600 text-sm">No auth events recorded yet</td></tr>
                             ) : logs.map((l) => {
                                 const meta = l.metadata || {};
                                 const success = meta.success === true;
                                 const geo = meta.geo as { city: string; country: string; region: string } | null | undefined;
                                 const identifier = (meta.identifier as string) || l.actor;
+                                const eventType = (meta.event_type as string) || 'login';
                                 const loginType = (meta.login_type as string) || 'user';
                                 const failureReason = meta.failure_reason as string | undefined;
                                 return (
                                     <tr key={l.id} className="hover:bg-white/[0.02] transition-colors">
                                         <td className="px-4 py-3 text-zinc-600 text-xs whitespace-nowrap">{fmt(l.created_at)}</td>
                                         <td className="px-4 py-3"><StatusBadge success={success} /></td>
+                                        <td className="px-4 py-3">
+                                            <span className={`text-[10px] uppercase tracking-widest px-2 py-0.5 font-medium ${eventType === 'logout'
+                                                ? 'text-zinc-400 bg-white/5'
+                                                : 'text-amber-400 bg-amber-500/10'}`}>
+                                                {eventType}
+                                            </span>
+                                        </td>
                                         <td className="px-4 py-3">
                                             <span className={`text-[10px] uppercase tracking-widest px-2 py-0.5 ${loginType === 'admin'
                                                 ? 'text-purple-400 bg-purple-500/10'

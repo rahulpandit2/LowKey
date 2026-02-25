@@ -4,7 +4,7 @@ import { getOne } from '@/lib/db';
 import { verifyPassword, createSession, setAdminSessionCookie } from '@/lib/auth';
 import { apiError, apiSuccess } from '@/lib/middleware';
 import { User } from '@/types';
-import { logLoginAttempt } from '@/lib/login-logger';
+import { logAuthEvent } from '@/lib/login-logger';
 
 export async function POST(req: NextRequest) {
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim()
@@ -29,8 +29,8 @@ export async function POST(req: NextRequest) {
         );
 
         if (!user) {
-            await logLoginAttempt({
-                success: false, login_type: 'admin',
+            await logAuthEvent({
+                event_type: 'login', success: false, login_type: 'admin',
                 identifier: login, user_id: null,
                 ip, user_agent: ua, failure_reason: 'user_not_found',
             });
@@ -38,8 +38,8 @@ export async function POST(req: NextRequest) {
         }
 
         if (user.status === 'banned' || user.status === 'suspended') {
-            await logLoginAttempt({
-                success: false, login_type: 'admin',
+            await logAuthEvent({
+                event_type: 'login', success: false, login_type: 'admin',
                 identifier: login, user_id: user.id,
                 ip, user_agent: ua, failure_reason: 'account_inactive',
             });
@@ -48,8 +48,8 @@ export async function POST(req: NextRequest) {
 
         const valid = await verifyPassword(password, user.password_hash);
         if (!valid) {
-            await logLoginAttempt({
-                success: false, login_type: 'admin',
+            await logAuthEvent({
+                event_type: 'login', success: false, login_type: 'admin',
                 identifier: login, user_id: user.id,
                 ip, user_agent: ua, failure_reason: 'wrong_password',
             });
@@ -63,8 +63,8 @@ export async function POST(req: NextRequest) {
         );
 
         if (!adminRecord || !adminRecord.is_active) {
-            await logLoginAttempt({
-                success: false, login_type: 'admin',
+            await logAuthEvent({
+                event_type: 'login', success: false, login_type: 'admin',
                 identifier: login, user_id: user.id,
                 ip, user_agent: ua, failure_reason: 'not_an_admin',
             });
@@ -78,8 +78,8 @@ export async function POST(req: NextRequest) {
         );
 
         // Log success to both audit_logs (for login panel) and admin_actions (for audit trail)
-        await logLoginAttempt({
-            success: true, login_type: 'admin',
+        await logAuthEvent({
+            event_type: 'login', success: true, login_type: 'admin',
             identifier: login, user_id: user.id,
             ip, user_agent: ua,
         });
