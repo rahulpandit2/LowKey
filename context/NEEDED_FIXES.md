@@ -55,15 +55,6 @@ Does not work. Make the creating new rule more comprehensive. Allow server admin
 ## Integrations
 Does not work. Make it modular to be useful with just UI.
 
-## Maintenance
-Does not work. Make it modular to be useful with just UI.
-
-## Profile
-Does not work. Shows Forbidden error message. Allow roleback.
-
-## Settings
-Does not work. Shows Internal server error error message
-
 ## Help
 Non functional
 
