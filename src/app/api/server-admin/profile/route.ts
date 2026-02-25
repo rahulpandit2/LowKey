@@ -3,6 +3,7 @@ import { NextRequest } from 'next/server';
 import { getAdminCurrentUser, verifyPassword, hashPassword } from '@/lib/auth';
 import { getOne, query } from '@/lib/db';
 import { apiError, apiSuccess } from '@/lib/middleware';
+import { resolveGeo } from '@/lib/login-logger';
 
 // GET /api/server-admin/profile — get current admin's profile
 export async function GET() {
@@ -59,19 +60,56 @@ export async function PATCH(req: NextRequest) {
             if (!valid) return apiError('Current password is incorrect', 400);
             const newHash = await hashPassword(new_password);
             await query(`UPDATE users SET password_hash = $1 WHERE id = $2`, [newHash, user.id]);
+
+            // Log password change
+            const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || undefined;
+            const ua = req.headers.get('user-agent') || undefined;
+            try {
+                const geo = await resolveGeo(ip || null);
+                const metadata: Record<string, unknown> = { keys_updated: ['password'], success: true };
+                if (geo) metadata.geo = geo;
+                await query(
+                    `INSERT INTO audit_logs (user_id, action, ip_address, user_agent, metadata) VALUES ($1, 'profile_update', $2::inet, $3, $4::jsonb)`,
+                    [user.id, ip || null, ua || null, JSON.stringify(metadata)]
+                );
+            } catch (err) {
+                logger.error('[Admin Profile Password Audit Log Error]', err);
+            }
+
             return apiSuccess({ message: 'Password updated' });
         }
 
         // Profile update
+        const changedKeys: string[] = [];
         if (display_name !== undefined) {
             await query(
                 `INSERT INTO profiles (user_id, display_name) VALUES ($1, $2)
          ON CONFLICT (user_id) DO UPDATE SET display_name = $2, updated_at = NOW()`,
                 [user.id, display_name]
             );
+            changedKeys.push('display_name');
         }
         if (email) {
             await query(`UPDATE users SET email = $1 WHERE id = $2`, [email.toLowerCase(), user.id]);
+            changedKeys.push('email');
+        }
+
+        // Audit Logging
+        const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || undefined;
+        const ua = req.headers.get('user-agent') || undefined;
+        if (changedKeys.length > 0) {
+            try {
+                const geo = await resolveGeo(ip || null);
+                const metadata: Record<string, unknown> = { keys_updated: changedKeys, success: true };
+                if (geo) metadata.geo = geo;
+
+                await query(
+                    `INSERT INTO audit_logs (user_id, action, ip_address, user_agent, metadata) VALUES ($1, 'profile_update', $2::inet, $3, $4::jsonb)`,
+                    [user.id, ip || null, ua || null, JSON.stringify(metadata)]
+                );
+            } catch (err) {
+                logger.error('[Admin Profile Audit Log Error]', err);
+            }
         }
 
         return apiSuccess({ message: 'Profile updated' });
