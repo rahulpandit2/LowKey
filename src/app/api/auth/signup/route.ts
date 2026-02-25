@@ -9,6 +9,13 @@ export async function POST(req: NextRequest) {
         const body = await req.json();
         const { username, email, password, display_name } = body;
 
+        // Verify if registration is actually enabled
+        const regSetting = await getOne<{ value: any }>(`SELECT value FROM site_settings WHERE key = 'registration_enabled'`);
+        const regVal = regSetting?.value;
+        if (regVal === 'false' || regVal === false || regVal === '"false"') {
+            return apiError('Registration is currently disabled', 403);
+        }
+
         // Validate required fields
         if (!username || !email || !password) {
             return apiError('Username, email, and password are required');

@@ -3,11 +3,15 @@
 import { useState, useEffect } from 'react';
 
 type SocialLink = { enabled: boolean; url: string };
-type SocialLinks = { github?: SocialLink; x?: SocialLink; linkedin?: SocialLink; instagram?: SocialLink };
+type SocialLinks = { github?: SocialLink; x?: SocialLink; linkedin?: SocialLink; instagram?: SocialLink; discord?: SocialLink; youtube?: SocialLink; twitch?: SocialLink; reddit?: SocialLink; tiktok?: SocialLink; };
 
 type Settings = {
     site_name: string;
     site_tagline: string;
+    site_description: string;
+    business_address: string;
+    business_hours: string;
+    show_business_info: string;
     registration_enabled: string;
     maintenance_mode: string;
     max_post_length: string;
@@ -20,6 +24,10 @@ type Settings = {
 const DEFAULT_SETTINGS: Settings = {
     site_name: 'LowKey',
     site_tagline: 'The quiet internet.',
+    site_description: '',
+    business_address: '',
+    business_hours: '',
+    show_business_info: 'false',
     registration_enabled: 'true',
     maintenance_mode: 'false',
     max_post_length: '2000',
@@ -34,6 +42,11 @@ const SOCIAL_PLATFORMS = [
     { key: 'x', label: 'X (Twitter)', placeholder: 'https://x.com/yourhandle' },
     { key: 'linkedin', label: 'LinkedIn', placeholder: 'https://linkedin.com/in/yourprofile' },
     { key: 'instagram', label: 'Instagram', placeholder: 'https://instagram.com/yourhandle' },
+    { key: 'discord', label: 'Discord', placeholder: 'https://discord.gg/yourserver' },
+    { key: 'youtube', label: 'YouTube', placeholder: 'https://youtube.com/@yourchannel' },
+    { key: 'twitch', label: 'Twitch', placeholder: 'https://twitch.tv/yourchannel' },
+    { key: 'reddit', label: 'Reddit', placeholder: 'https://reddit.com/r/yoursr' },
+    { key: 'tiktok', label: 'TikTok', placeholder: 'https://tiktok.com/@yourhandle' },
 ];
 
 export default function AdminSettingsPage() {
@@ -132,6 +145,12 @@ export default function AdminSettingsPage() {
                                 <input type="text" value={settings.site_tagline} onChange={(e) => setSettings(s => ({ ...s, site_tagline: e.target.value }))}
                                     className="w-full bg-transparent border-b border-white/10 py-2 text-white text-sm focus:outline-none focus:border-white/30 transition-colors" />
                             </div>
+                            <div>
+                                <label className="block text-[10px] uppercase tracking-[0.25em] text-zinc-500 mb-2">SEO Description</label>
+                                <textarea value={settings.site_description} onChange={(e) => setSettings(s => ({ ...s, site_description: e.target.value }))} rows={2}
+                                    placeholder="Used for meta description tags..."
+                                    className="w-full bg-transparent border-b border-white/10 py-2 text-white text-sm focus:outline-none focus:border-white/30 transition-colors resize-none" />
+                            </div>
                         </div>
                     </section>
 
@@ -162,6 +181,30 @@ export default function AdminSettingsPage() {
                                     </div>
                                 );
                             })}
+                        </div>
+                    </section>
+
+                    {/* Business Information */}
+                    <section>
+                        <h2 className="text-xs uppercase tracking-[0.25em] text-zinc-500 mb-6 pb-2 border-b border-white/[0.05]">Business Info</h2>
+                        <div className="space-y-5">
+                            <ToggleRow label="Show Business Info" desc="Enable to display address and hours on public pages" settingKey="show_business_info" />
+                            {settings.show_business_info === 'true' && (
+                                <>
+                                    <div>
+                                        <label className="block text-[10px] uppercase tracking-[0.25em] text-zinc-500 mb-2">Business Address</label>
+                                        <textarea value={settings.business_address} onChange={(e) => setSettings(s => ({ ...s, business_address: e.target.value }))} rows={2}
+                                            placeholder="123 Example St, City, Country"
+                                            className="w-full bg-transparent border-b border-white/10 py-2 text-white text-sm focus:outline-none focus:border-white/30 transition-colors resize-none" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] uppercase tracking-[0.25em] text-zinc-500 mb-2">Opening Hours</label>
+                                        <textarea value={settings.business_hours} onChange={(e) => setSettings(s => ({ ...s, business_hours: e.target.value }))} rows={2}
+                                            placeholder="Mon-Fri: 9AM - 5PM"
+                                            className="w-full bg-transparent border-b border-white/10 py-2 text-white text-sm focus:outline-none focus:border-white/30 transition-colors resize-none" />
+                                    </div>
+                                </>
+                            )}
                         </div>
                     </section>
 

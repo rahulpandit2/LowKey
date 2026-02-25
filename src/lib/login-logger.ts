@@ -16,7 +16,7 @@ export interface AuthEventData {
  * Resolve city/country from IP address using ip-api.com (free, no key required, ~45 req/min).
  * Falls back to null on any error (network, rate-limit, private IP).
  */
-async function resolveGeo(ip: string | null): Promise<{ city: string; country: string; region: string } | null> {
+export async function resolveGeo(ip: string | null): Promise<{ city: string; country: string; region: string } | null> {
     if (!ip || ip === '127.0.0.1' || ip === '::1' || ip.startsWith('192.168.') || ip.startsWith('10.') || ip.startsWith('172.')) {
         return null; // private / loopback — no geolocation available
     }
