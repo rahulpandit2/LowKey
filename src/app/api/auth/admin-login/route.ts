@@ -4,8 +4,14 @@ import { getOne } from '@/lib/db';
 import { verifyPassword, createSession, setAdminSessionCookie } from '@/lib/auth';
 import { apiError, apiSuccess } from '@/lib/middleware';
 import { User } from '@/types';
+import { logLoginAttempt } from '@/lib/login-logger';
 
 export async function POST(req: NextRequest) {
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim()
+        || req.headers.get('x-real-ip')
+        || null;
+    const ua = req.headers.get('user-agent') || null;
+
     try {
         const body = await req.json();
         const { login, password } = body;
@@ -23,16 +29,30 @@ export async function POST(req: NextRequest) {
         );
 
         if (!user) {
+            await logLoginAttempt({
+                success: false, login_type: 'admin',
+                identifier: login, user_id: null,
+                ip, user_agent: ua, failure_reason: 'user_not_found',
+            });
             return apiError('Invalid credentials', 401);
         }
 
         if (user.status === 'banned' || user.status === 'suspended') {
+            await logLoginAttempt({
+                success: false, login_type: 'admin',
+                identifier: login, user_id: user.id,
+                ip, user_agent: ua, failure_reason: 'account_inactive',
+            });
             return apiError('Account is not active', 403);
         }
 
-        // Verify password
         const valid = await verifyPassword(password, user.password_hash);
         if (!valid) {
+            await logLoginAttempt({
+                success: false, login_type: 'admin',
+                identifier: login, user_id: user.id,
+                ip, user_agent: ua, failure_reason: 'wrong_password',
+            });
             return apiError('Invalid credentials', 401);
         }
 
@@ -43,28 +63,35 @@ export async function POST(req: NextRequest) {
         );
 
         if (!adminRecord || !adminRecord.is_active) {
+            await logLoginAttempt({
+                success: false, login_type: 'admin',
+                identifier: login, user_id: user.id,
+                ip, user_agent: ua, failure_reason: 'not_an_admin',
+            });
             return apiError('Invalid credentials', 401);
         }
 
-
         // Update last login
-        const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || null;
         await getOne(
             `UPDATE users SET last_login_at = NOW(), last_login_ip = $1 WHERE id = $2 RETURNING id`,
             [ip, user.id]
         );
 
-        // Create session
-        const ua = req.headers.get('user-agent') || undefined;
-        const token = await createSession(user.id, ip || undefined, ua);
-        await setAdminSessionCookie(token);
+        // Log success to both audit_logs (for login panel) and admin_actions (for audit trail)
+        await logLoginAttempt({
+            success: true, login_type: 'admin',
+            identifier: login, user_id: user.id,
+            ip, user_agent: ua,
+        });
 
-        // Log admin login — admin_id references admin_users.id, not users.id
         await getOne(
             `INSERT INTO admin_actions (admin_id, action_type, target_type, reason, ip_address, user_agent)
-             VALUES ($1, 'login', 'admin_session', 'Admin login', $2, $3) RETURNING id`,
+             VALUES ($1, 'login', 'admin_session', 'Admin login success', $2, $3) RETURNING id`,
             [adminRecord.id, ip || null, ua || null]
-        );
+        ).catch(() => { /* non-critical */ });
+
+        const token = await createSession(user.id, ip || undefined, ua || undefined);
+        await setAdminSessionCookie(token);
 
         return apiSuccess({
             id: user.id,

@@ -1,19 +1,31 @@
-# Netlify Configuration for Next.js 15 with PostgreSQL
+# Netlify Configuration for LowKey — Next.js 15 with PostgreSQL
 [build]
   command = "npm run build"
 
 [build.environment]
   NODE_VERSION = "20"
 
-# Environment variables (set these in Netlify UI for security)
+# Netlify's Next.js runtime handles SSR and API routes as serverless functions.
+# No manual plugin needed — Netlify detects Next.js automatically.
+# The framework = "next" directive ensures the runtime uses Next.js's native adapter.
+[build.processing]
+  skip_processing = false
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+# Environment variables (set in Netlify UI — do NOT commit secrets here)
 # Required:
 # - DB_HOST
 # - DB_PORT
 # - DB_NAME
 # - DB_USER
 # - DB_PASSWORD
+# - DEFAULT_ADMIN_USERNAME
+# - DEFAULT_ADMIN_EMAIL
+# - DEFAULT_ADMIN_PASSWORD
 
-# Headers for security
+# Security headers
 [[headers]]
   for = "/*"
   [headers.values]
@@ -22,12 +34,7 @@
     Referrer-Policy = "strict-origin-when-cross-origin"
     Permissions-Policy = "camera=(), microphone=(), geolocation=()"
 
-# Cache static assets
-[[headers]]
-  for = "/assets/*"
-  [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
-
+# Cache static assets long-term
 [[headers]]
   for = "/_next/static/*"
   [headers.values]

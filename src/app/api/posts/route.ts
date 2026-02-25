@@ -57,8 +57,9 @@ export const POST = withAuth(async (req, { user }) => {
         return apiError('Invalid post type');
     }
 
-    const status = body.scheduled_at ? 'scheduled' : 'published';
-    const publishedAt = body.scheduled_at ? null : new Date().toISOString();
+    const requestedStatus = body.status === 'draft' ? 'draft' : (body.scheduled_at ? 'scheduled' : 'published');
+    const status = requestedStatus;
+    const publishedAt = status === 'published' ? new Date().toISOString() : null;
 
     const post = await getOne<Post>(
         `INSERT INTO posts (

@@ -5,11 +5,18 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import Icon from '@/components/ui/AppIcon';
 
+type AuthUser = {
+  id: string;
+  username: string;
+  isAdminActive: boolean;
+  profile?: { display_name?: string };
+};
+
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
 
   useEffect(() => {
     fetch('/api/auth/me')
@@ -17,15 +24,15 @@ export default function Sidebar() {
       .then((data) => {
         if (data?.data) setUser(data.data);
       })
-      .catch(() => { });
+      .catch(() => { /* silently fail */ });
   }, []);
 
   const handleLogout = async () => {
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
       router.push('/login');
-    } catch (error) {
-      console.error('Logout failed:', error);
+    } catch {
+      // Silently fail
     }
   };
 
@@ -119,6 +126,8 @@ export default function Sidebar() {
               <Icon name="Cog6ToothIcon" size={18} className="text-zinc-400" />
               Settings
             </Link>
+
+            {/* Admin switch — shown when user has active admin session */}
             {user?.isAdminActive && (
               <a
                 href="/server-admin"
@@ -128,13 +137,34 @@ export default function Sidebar() {
                 Switch to Admin
               </a>
             )}
-            <button
-              onClick={handleLogout}
-              className={`flex items-center gap-3 px-4 py-3 hover:bg-white/5 transition-colors text-sm text-red-400 w-full text-left ${user?.isAdminActive ? '' : 'border-t border-white/10 mt-1 pt-3'}`}
-            >
-              <Icon name="ArrowRightOnRectangleIcon" size={18} className="text-red-400" />
-              Logout User
-            </button>
+
+            {/*
+              Logout User — only shown when NOT admin-only.
+              If a user has ONLY an admin session (no regular user session),
+              do not show logout here. Logout from the server-admin panel instead.
+              If both sessions exist, show "Logout User" to end the regular session
+              while keeping admin session active.
+            */}
+            {!user?.isAdminActive && (
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-3 px-4 py-3 hover:bg-white/5 transition-colors text-sm text-red-400 w-full text-left border-t border-white/10 mt-1 pt-3"
+              >
+                <Icon name="ArrowRightOnRectangleIcon" size={18} className="text-red-400" />
+                Logout
+              </button>
+            )}
+
+            {/* If dual session active, offer "Logout User" but keep phrasing clear */}
+            {user?.isAdminActive && (
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-3 px-4 py-3 hover:bg-white/5 transition-colors text-sm text-zinc-500 w-full text-left"
+              >
+                <Icon name="ArrowRightOnRectangleIcon" size={18} className="text-zinc-600" />
+                <span className="text-xs">Logout user session only</span>
+              </button>
+            )}
           </div>
         )}
       </div>

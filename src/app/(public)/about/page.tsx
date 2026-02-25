@@ -6,9 +6,20 @@ import Comparison from './components/Comparison';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'About - LowKey',
+  title: 'About — LowKey',
   description:
-    "Learn about LowKey's mission: a quieter internet for thoughtful adults. Read our manifesto and see how we're different from performative social platforms.",
+    "Learn about LowKey's mission: a quieter internet for thoughtful adults. Read the manifesto, founder story, and how LowKey is different from performative social platforms.",
+  openGraph: {
+    title: 'About — LowKey | The Good Internet Project',
+    description: "Read the manifesto and founder story behind LowKey — a platform built because the internet needed to be better.",
+    type: 'website',
+    siteName: 'LowKey',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'About LowKey — The Good Internet Project',
+    description: "Read the manifesto and founder story behind LowKey.",
+  },
 };
 
 export default function AboutPage() {

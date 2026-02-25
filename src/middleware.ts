@@ -1,40 +1,51 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const rateLimitMap = new Map();
+// In-memory rate limit store (resets on cold starts — sufficient for edge environments)
+const rateLimitMap = new Map<string, { count: number; startTime: number }>();
 
 /**
  * Middleware — injects the request pathname as a custom header.
- * This lets server-side layouts (like server-admin/layout.tsx) read
- * the current URL path via `headers().get('x-pathname')` to make
- * routing decisions — for example, bypassing auth on /server-admin/login
- * to prevent infinite redirect loops.
+ * This allows server-side layouts (like server-admin/layout.tsx) to read
+ * the current URL path via headers().get('x-pathname') for routing decisions,
+ * e.g. bypassing auth on /server-admin/login to prevent infinite redirect loops.
+ *
+ * Also applies basic rate limiting to auth endpoints.
  */
 export function middleware(req: NextRequest) {
     const res = NextResponse.next();
     res.headers.set('x-pathname', req.nextUrl.pathname);
 
-    // Basic Rate Limiting
-    const ip = req.ip || req.headers.get('x-forwarded-for') || 'unknown';
+    // Basic Rate Limiting on auth routes
     const currentPath = req.nextUrl.pathname;
 
     if (currentPath.startsWith('/api/auth/')) {
         const windowMs = 60 * 1000; // 1 minute
-        const maxRequests = 10;
+        const maxRequests = 20;
+
+        // req.ip is deprecated in Next.js 15 — use x-forwarded-for header instead
+        const ip =
+            req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+            req.headers.get('x-real-ip') ||
+            'unknown';
 
         const key = `${ip}:${currentPath}`;
-        const record = rateLimitMap.get(key) || { count: 0, startTime: Date.now() };
+        const now = Date.now();
+        const record = rateLimitMap.get(key) ?? { count: 0, startTime: now };
 
-        if (Date.now() - record.startTime > windowMs) {
+        if (now - record.startTime > windowMs) {
             record.count = 1;
-            record.startTime = Date.now();
+            record.startTime = now;
         } else {
-            record.count++;
+            record.count += 1;
         }
 
         rateLimitMap.set(key, record);
 
         if (record.count > maxRequests) {
-            return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+            return NextResponse.json(
+                { error: 'Too many requests. Please try again later.' },
+                { status: 429 }
+            );
         }
     }
 

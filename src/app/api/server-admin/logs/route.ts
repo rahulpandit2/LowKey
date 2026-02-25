@@ -1,85 +1,162 @@
 import { logger } from '@/lib/logger';
 import { NextRequest } from 'next/server';
-import { getCurrentUser } from '@/lib/auth';
+import { requireAdmin } from '@/lib/admin-auth';
 import { getOne, query } from '@/lib/db';
 import { apiError, apiSuccess } from '@/lib/middleware';
 
-async function requireAdmin() {
-    const user = await getCurrentUser();
-    if (!user) return null;
-    const a = await getOne<{ is_active: boolean }>(
-        `SELECT is_active FROM admin_users WHERE user_id = $1`, [user.id]
-    );
-    return a?.is_active ? user : null;
-}
-
-// GET /api/server-admin/logs?page=1&action_type=&admin_id=
+// GET /api/server-admin/logs?page=1&tab=login_attempts|admin_actions|all
 export async function GET(req: NextRequest) {
     try {
         const admin = await requireAdmin();
         if (!admin) return apiError('Forbidden', 403);
 
         const { searchParams } = new URL(req.url);
-        const page = parseInt(searchParams.get('page') || '1');
-        const actionType = searchParams.get('action_type') || '';
+        const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
+        const tab = searchParams.get('tab') || 'login_attempts';
         const limit = 50;
         const offset = (page - 1) * limit;
 
-        const params: (string | number)[] = [];
-        let where = '';
-        let paramIdx = 1;
-        if (actionType) {
-            where = `WHERE action_type = $${paramIdx}`;
-            params.push(actionType);
-            paramIdx++;
-        }
-        params.push(limit, offset);
+        if (tab === 'login_attempts') {
+            // From audit_logs where action is login_success or login_failure
+            const [logs, countRow] = await Promise.all([
+                query<{
+                    id: string; action: string; ip_address: string | null;
+                    user_agent: string | null; metadata: Record<string, unknown> | null;
+                    created_at: string; actor: string;
+                }>(
+                    `SELECT
+                       al.id,
+                       al.action AS action_type,
+                       al.ip_address::text AS ip_address,
+                       al.user_agent,
+                       al.metadata,
+                       al.created_at,
+                       COALESCE(u.username, al.metadata->>'identifier', 'anonymous') AS actor
+                     FROM audit_logs al
+                     LEFT JOIN users u ON u.id = al.user_id
+                     WHERE al.action IN ('login_success', 'login_failure')
+                     ORDER BY al.created_at DESC
+                     LIMIT $1 OFFSET $2`,
+                    [limit, offset]
+                ),
+                getOne<{ count: string }>(
+                    `SELECT COUNT(*)::text AS count FROM audit_logs WHERE action IN ('login_success', 'login_failure')`,
+                    []
+                ),
+            ]);
 
+            const total = parseInt(countRow?.count || '0');
+            return apiSuccess({
+                logs: logs.rows.map(r => ({
+                    ...r,
+                    target_type: null,
+                    target_id: null,
+                    reason: null,
+                })),
+                total,
+                page,
+                pages: Math.ceil(total / limit),
+            });
+        }
+
+        if (tab === 'admin_actions') {
+            const [logs, countRow] = await Promise.all([
+                query<{
+                    id: string; action_type: string; target_type: string | null;
+                    target_id: string | null; reason: string | null;
+                    ip_address: string | null; user_agent: string | null;
+                    created_at: string; actor: string;
+                }>(
+                    `SELECT
+                       aa.id,
+                       aa.action_type,
+                       aa.target_type,
+                       aa.target_id::text AS target_id,
+                       aa.reason,
+                       aa.ip_address::text AS ip_address,
+                       aa.user_agent,
+                       aa.created_at,
+                       u.username AS actor
+                     FROM admin_actions aa
+                     JOIN admin_users au ON au.id = aa.admin_id
+                     JOIN users u ON u.id = au.user_id
+                     ORDER BY aa.created_at DESC
+                     LIMIT $1 OFFSET $2`,
+                    [limit, offset]
+                ),
+                getOne<{ count: string }>(
+                    `SELECT COUNT(*)::text AS count FROM admin_actions`,
+                    []
+                ),
+            ]);
+
+            const total = parseInt(countRow?.count || '0');
+            return apiSuccess({
+                logs: logs.rows.map(r => ({ ...r, metadata: null })),
+                total,
+                page,
+                pages: Math.ceil(total / limit),
+            });
+        }
+
+        // tab === 'all' — combined view
         const [logs, countRow] = await Promise.all([
             query<{
-                id: string; action_type: string; target_type: string; target_id: string | null;
-                reason: string | null; ip_address: string | null; created_at: string;
-                admin_username: string;
+                id: string; action_type: string; target_type: string | null;
+                target_id: string | null; reason: string | null;
+                ip_address: string | null; user_agent: string | null;
+                created_at: string; actor: string; metadata: Record<string, unknown> | null;
             }>(
-                `WITH combined_logs AS (
+                `SELECT
+                   id, action_type, target_type, target_id, reason, ip_address, user_agent, created_at, actor, metadata
+                 FROM (
                    SELECT
-                     aa.id, aa.action_type, aa.target_type, aa.target_id,
-                     aa.reason, COALESCE(aa.ip_address::text, '') AS ip_address, aa.created_at,
-                     u.username AS admin_username
+                     aa.id,
+                     aa.action_type,
+                     aa.target_type,
+                     aa.target_id::text AS target_id,
+                     aa.reason,
+                     aa.ip_address::text AS ip_address,
+                     aa.user_agent,
+                     aa.created_at,
+                     u.username AS actor,
+                     NULL::jsonb AS metadata
                    FROM admin_actions aa
-                   JOIN users u ON u.id = aa.admin_id
-                   
+                   JOIN admin_users au ON au.id = aa.admin_id
+                   JOIN users u ON u.id = au.user_id
+
                    UNION ALL
-                   
+
                    SELECT
-                     al.id, al.action AS action_type, al.target_type, al.target_id,
-                     al.metadata->>'level' AS reason, COALESCE(al.ip_address::text, '') AS ip_address, al.created_at,
-                     COALESCE(u.username, 'system') AS admin_username
+                     al.id,
+                     al.action AS action_type,
+                     al.target_type,
+                     al.target_id::text AS target_id,
+                     al.metadata->>'failure_reason' AS reason,
+                     al.ip_address::text AS ip_address,
+                     al.user_agent,
+                     al.created_at,
+                     COALESCE(u.username, al.metadata->>'identifier', 'system') AS actor,
+                     al.metadata
                    FROM audit_logs al
                    LEFT JOIN users u ON u.id = al.user_id
-                 )
-                 SELECT * FROM combined_logs
-                 ${where}
+                 ) combined
                  ORDER BY created_at DESC
-                 LIMIT $${paramIdx} OFFSET $${paramIdx + 1}`,
-                params
+                 LIMIT $1 OFFSET $2`,
+                [limit, offset]
             ),
-            getOne<{ count: number }>(
-                `WITH combined_logs AS (
-                   SELECT action_type FROM admin_actions
-                   UNION ALL
-                   SELECT action AS action_type FROM audit_logs
-                 )
-                 SELECT COUNT(*) AS count FROM combined_logs ${where}`,
-                params.slice(0, -2)
+            getOne<{ count: string }>(
+                `SELECT (SELECT COUNT(*) FROM admin_actions) + (SELECT COUNT(*) FROM audit_logs) AS count`,
+                []
             ),
         ]);
 
+        const total = parseInt(countRow?.count || '0');
         return apiSuccess({
             logs: logs.rows,
-            total: Number(countRow?.count || 0),
+            total,
             page,
-            pages: Math.ceil(Number(countRow?.count || 0) / limit),
+            pages: Math.ceil(total / limit),
         });
     } catch (error) {
         logger.error('[Admin Logs GET]', error);

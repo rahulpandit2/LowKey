@@ -21,12 +21,16 @@ function timeAgo(date: string | null) {
     return `${Math.floor(s / 86400)}d ago`;
 }
 
+const FILTERS = ['all', 'active', 'banned', 'suspended'];
+
 export default function AdminUsersPage() {
     const [users, setUsers] = useState<User[]>([]);
     const [total, setTotal] = useState(0);
     const [page, setPage] = useState(1);
     const [pages, setPages] = useState(1);
-    const [search, setSearch] = useState('');
+    // Two separate search states: what the user is typing vs what's committed to the query
+    const [searchInput, setSearchInput] = useState('');
+    const [committedSearch, setCommittedSearch] = useState('');
     const [filter, setFilter] = useState('all');
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -34,7 +38,7 @@ export default function AdminUsersPage() {
 
     const fetchUsers = useCallback(() => {
         setLoading(true);
-        const params = new URLSearchParams({ page: String(page), search, filter });
+        const params = new URLSearchParams({ page: String(page), search: committedSearch, filter });
         fetch(`/api/server-admin/users?${params}`)
             .then((r) => r.ok ? r.json() : null)
             .then((d) => {
@@ -46,9 +50,14 @@ export default function AdminUsersPage() {
                 setLoading(false);
             })
             .catch(() => setLoading(false));
-    }, [page, search, filter]);
+    }, [page, committedSearch, filter]);
 
     useEffect(() => { fetchUsers(); }, [fetchUsers]);
+
+    const commitSearch = () => {
+        setCommittedSearch(searchInput);
+        setPage(1);
+    };
 
     const doAction = async (userId: string, action: string) => {
         setActionLoading(userId);
@@ -67,8 +76,6 @@ export default function AdminUsersPage() {
         }
         setTimeout(() => setMsg(''), 3000);
     };
-
-    const FILTERS = ['all', 'active', 'banned', 'suspended'];
 
     return (
         <div className="p-8">
@@ -98,13 +105,31 @@ export default function AdminUsersPage() {
                         </button>
                     ))}
                 </div>
-                <input
-                    type="text"
-                    value={search}
-                    onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-                    placeholder="Search users..."
-                    className="flex-1 min-w-48 bg-transparent border-b border-white/10 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-white/30 transition-colors"
-                />
+                {/* Explicit search button — prevents a request on every keystroke */}
+                <div className="flex gap-2 flex-1 min-w-0">
+                    <input
+                        type="text"
+                        value={searchInput}
+                        onChange={(e) => setSearchInput(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && commitSearch()}
+                        placeholder="Search by username or email..."
+                        className="flex-1 bg-transparent border-b border-white/10 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-white/30 transition-colors"
+                    />
+                    <button
+                        onClick={commitSearch}
+                        className="px-5 py-2 bg-white text-black text-xs uppercase tracking-widest hover:bg-zinc-200 transition-colors"
+                    >
+                        Search
+                    </button>
+                    {committedSearch && (
+                        <button
+                            onClick={() => { setSearchInput(''); setCommittedSearch(''); setPage(1); }}
+                            className="text-xs text-zinc-500 hover:text-white transition-colors px-2"
+                        >
+                            Clear
+                        </button>
+                    )}
+                </div>
             </div>
 
             {/* Table */}
@@ -130,7 +155,9 @@ export default function AdminUsersPage() {
                             ))
                         ) : users.length === 0 ? (
                             <tr>
-                                <td colSpan={5} className="px-4 py-10 text-center text-zinc-600 text-sm">No users found</td>
+                                <td colSpan={5} className="px-4 py-10 text-center text-zinc-600 text-sm">
+                                    {committedSearch ? `No users matching "${committedSearch}"` : 'No users found'}
+                                </td>
                             </tr>
                         ) : (
                             users.map((u) => (
@@ -176,9 +203,9 @@ export default function AdminUsersPage() {
             {/* Pagination */}
             {pages > 1 && (
                 <div className="flex items-center gap-4 mt-4">
-                    <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="text-xs text-zinc-500 hover:text-white disabled:opacity-30 transition-colors">← Prev</button>
+                    <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="text-xs text-zinc-500 hover:text-white disabled:opacity-30 transition-colors">← Prev</button>
                     <span className="text-xs text-zinc-600">Page {page} of {pages}</span>
-                    <button onClick={() => setPage(p => Math.min(pages, p + 1))} disabled={page === pages} className="text-xs text-zinc-500 hover:text-white disabled:opacity-30 transition-colors">Next →</button>
+                    <button onClick={() => setPage((p) => Math.min(pages, p + 1))} disabled={page === pages} className="text-xs text-zinc-500 hover:text-white disabled:opacity-30 transition-colors">Next →</button>
                 </div>
             )}
         </div>

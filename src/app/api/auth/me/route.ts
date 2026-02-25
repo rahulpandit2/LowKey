@@ -6,22 +6,18 @@ import { getAdminCurrentUser } from '@/lib/auth';
 
 export const GET = withAuth(async (_req, { user }) => {
     // Get full profile
-    logger.info('[Auth/Me] Fetching profile for user', user.id);
     const profile = await getOne<Profile>(
         `SELECT * FROM profiles WHERE user_id = $1`,
         [user.id]
     );
-    logger.info('[Auth/Me] Profile fetched:', profile ? 'found' : 'null');
 
     // Get follower/following counts
-    logger.info('[Auth/Me] Fetching counts');
     const counts = await getOne<{ followers: string; following: string }>(
         `SELECT
        (SELECT COUNT(*) FROM follows WHERE following_id = $1) AS followers,
        (SELECT COUNT(*) FROM follows WHERE follower_id = $1) AS following`,
         [user.id]
     );
-    logger.info('[Auth/Me] Counts fetched:', counts);
 
     // Check if there is an active admin session as well
     const adminUser = await getAdminCurrentUser();

@@ -9,9 +9,24 @@ import CommunitySection from './components/CommunitySection';
 import CTASection from './components/CTASection';
 
 export const metadata: Metadata = {
-  title: 'LowKey - The Good Internet Project',
+  title: 'LowKey — The Good Internet Project',
   description:
-    "Think. Don't perform. A quieter internet for thoughtful adults. Share ideas, get real feedback, and grow without likes, leaderboards, or performance metrics.",
+    "Think. Don't perform. LowKey is a private-first social platform for honest sharing, real feedback, and quiet growth — without likes, leaderboards, or performance pressure.",
+  keywords: [
+    'social platform', 'anonymous posting', 'mental health community', 'honest feedback',
+    'private social media', 'incognito help', 'thoughtful discussion', 'LowKey'
+  ],
+  openGraph: {
+    title: 'LowKey — The Good Internet Project',
+    description: "Think. Don't perform. A quieter internet for thoughtful adults.",
+    type: 'website',
+    siteName: 'LowKey',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'LowKey — The Good Internet Project',
+    description: "Think. Don't perform. A quieter internet for thoughtful adults.",
+  },
 };
 
 export default function Homepage() {

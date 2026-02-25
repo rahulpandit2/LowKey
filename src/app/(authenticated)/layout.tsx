@@ -6,6 +6,7 @@ import { getCurrentUser } from '@/lib/auth';
 import Sidebar from '@/components/authenticated/Sidebar';
 import MobileHeader from '@/components/authenticated/MobileHeader';
 import AdminBanner from '@/components/authenticated/AdminBanner';
+import TrendingSidebar from '@/components/authenticated/TrendingSidebar';
 
 const outfit = Outfit({
   subsets: ['latin'],
@@ -40,21 +41,8 @@ export default async function AuthenticatedLayout({ children }: { children: Reac
       {/* Main Content */}
       <main className="flex-1 min-w-0 border-x border-white/5 md:border-none">{children}</main>
 
-      {/* Right Sidebar (Optional / Future) */}
-      <aside className="hidden lg:block w-80 sticky top-0 h-screen border-l border-white/10 p-6">
-        {/* Trends or Suggestions */}
-        <div className="mb-8">
-          <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-500 mb-4">
-            Trending
-          </h3>
-          <div className="space-y-4">
-            {/* Placeholders */}
-            <div className="h-16 bg-white/5 rounded-lg"></div>
-            <div className="h-16 bg-white/5 rounded-lg"></div>
-            <div className="h-16 bg-white/5 rounded-lg"></div>
-          </div>
-        </div>
-      </aside>
+      {/* Right Sidebar — Trending / Quick Post */}
+      <TrendingSidebar />
     </div>
   );
 }

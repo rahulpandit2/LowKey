@@ -4,6 +4,14 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
 import { feed as feedApi } from '@/lib/api';
+import ReactionPicker from '@/components/posts/ReactionPicker';
+import MarkButton from '@/components/posts/MarkButton';
+
+type ReactionKey =
+  | 'me_too' | 'interesting' | 'unique' | 'loved_it'
+  | 'challenged_me' | 'made_me_question' | 'relatable_struggle' | 'motivated_me';
+
+type MarkKey = 'read_carefully' | 'saved_in_mind' | 'inspired_to_reflect';
 
 type FeedPost = {
   id: string;
@@ -18,8 +26,8 @@ type FeedPost = {
   author_username: string;
   author_display_name: string | null;
   author_avatar_url: string | null;
-  has_reacted?: boolean;
-  is_bookmarked?: boolean;
+  user_reaction?: ReactionKey | null;
+  user_mark?: MarkKey | null;
 };
 
 const FILTERS = [
@@ -30,12 +38,13 @@ const FILTERS = [
   { key: 'popular', label: 'Popular' },
 ];
 
-const POST_TYPE_BADGES: Record<string, { label: string; color: string; icon: string }> = {
-  thought: { label: 'Thought', color: 'text-blue-400 bg-blue-500/10', icon: 'LightBulbIcon' },
-  problem: { label: 'Problem', color: 'text-amber-400 bg-amber-500/10', icon: 'QuestionMarkCircleIcon' },
-  achievement: { label: 'Achievement', color: 'text-green-400 bg-green-500/10', icon: 'TrophyIcon' },
-  dilemma: { label: 'Dilemma', color: 'text-purple-400 bg-purple-500/10', icon: 'ScaleIcon' },
-  help: { label: 'Help', color: 'text-indigo-400 bg-indigo-500/10', icon: 'HandRaisedIcon' },
+// LowKey post type labels — no icon-heavy design, text-driven per brand guidelines
+const POST_TYPE_LABEL: Record<string, string> = {
+  thought: 'Thought',
+  problem: 'Problem',
+  achievement: 'Achievement',
+  dilemma: 'Dilemma',
+  help: 'Help',
 };
 
 function timeAgo(date: string) {
@@ -50,9 +59,6 @@ export default function FeedPage() {
   const [activeFilter, setActiveFilter] = useState('all');
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [loading, setLoading] = useState(true);
-  // Track per-post interaction state
-  const [reacted, setReacted] = useState<Set<string>>(new Set());
-  const [bookmarked, setBookmarked] = useState<Set<string>>(new Set());
 
   const loadFeed = useCallback(() => {
     setLoading(true);
@@ -66,46 +72,25 @@ export default function FeedPage() {
 
   useEffect(() => { loadFeed(); }, [loadFeed]);
 
-  // Optimistic reaction toggle
-  const toggleReact = async (postId: string) => {
-    const wasReacted = reacted.has(postId);
-    // Optimistic UI
-    setReacted((prev) => {
-      const next = new Set(prev);
-      wasReacted ? next.delete(postId) : next.add(postId);
-      return next;
-    });
-    setPosts((prev) => prev.map((p) => p.id === postId
-      ? { ...p, reaction_count: p.reaction_count + (wasReacted ? -1 : 1) }
-      : p
-    ));
-
-    // API call
-    if (wasReacted) {
-      await fetch(`/api/posts/${postId}/reactions?reaction=interesting`, { method: 'DELETE' });
-    } else {
-      await fetch(`/api/posts/${postId}/reactions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reaction: 'interesting' }),
-      });
-    }
+  // Optimistic reaction handler
+  const handleReact = (postId: string, reaction: ReactionKey | null) => {
+    setPosts((prev) => prev.map((p) => {
+      if (p.id !== postId) return p;
+      const hadReaction = !!p.user_reaction;
+      const gettingReaction = !!reaction;
+      const countDelta = hadReaction && !gettingReaction ? -1 : !hadReaction && gettingReaction ? 1 : 0;
+      return { ...p, user_reaction: reaction, reaction_count: p.reaction_count + countDelta };
+    }));
   };
 
-  // Optimistic bookmark toggle
-  const toggleBookmark = async (postId: string) => {
-    const wasBookmarked = bookmarked.has(postId);
-    setBookmarked((prev) => {
-      const next = new Set(prev);
-      wasBookmarked ? next.delete(postId) : next.add(postId);
-      return next;
-    });
-    await fetch(`/api/posts/${postId}/bookmarks`, {
-      method: wasBookmarked ? 'DELETE' : 'POST',
-      headers: { 'Content-Type': 'application/json' },
-    });
+  // Optimistic mark handler
+  const handleMark = (postId: string, mark: MarkKey | null) => {
+    setPosts((prev) => prev.map((p) => p.id === postId ? { ...p, user_mark: mark } : p));
   };
 
+  const handleShare = (postId: string) => {
+    navigator.clipboard.writeText(`${window.location.origin}/post/${postId}`);
+  };
 
   return (
     <div className="max-w-2xl mx-auto py-12 px-6">
@@ -143,7 +128,7 @@ export default function FeedPage() {
           <Icon name="PencilSquareIcon" size={18} className="text-zinc-500 group-hover:text-white transition-colors" />
         </div>
         <span className="text-zinc-500 group-hover:text-zinc-300 transition-colors text-sm">
-          Share a thought, problem, or win...
+          Share a thought, problem, or win…
         </span>
         <Icon
           name="ArrowUpRightIcon"
@@ -171,78 +156,96 @@ export default function FeedPage() {
         </div>
       ) : (
         <div className="space-y-0">
-          {posts.map((post) => {
-            const badge = POST_TYPE_BADGES[post.post_type];
-            return (
-              <article key={post.id} className="border-b border-white/[0.05] py-8 group">
-                {/* Meta row */}
-                <div className="flex items-center gap-3 mb-4">
-                  {post.is_incognito ? (
-                    <div className="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center">
-                      <Icon name="LockClosedIcon" size={14} className="text-indigo-400" />
-                    </div>
-                  ) : (
-                    <div className="w-8 h-8 rounded-full bg-zinc-800"></div>
-                  )}
-                  <div className="flex items-center gap-2 text-xs">
-                    <span className="text-white font-medium">
-                      {post.is_incognito ? 'Incognito' : post.author_display_name || post.author_username}
-                    </span>
-                    {!post.is_incognito && (
-                      <span className="text-zinc-600">@{post.author_username}</span>
-                    )}
-                    <span className="text-zinc-700">·</span>
-                    <span className="text-zinc-600">{timeAgo(post.created_at)}</span>
+          {posts.map((post) => (
+            <article key={post.id} className="border-b border-white/[0.05] py-8 group">
+              {/* Meta row */}
+              <div className="flex items-center gap-3 mb-4">
+                {post.is_incognito ? (
+                  <div className="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center flex-shrink-0">
+                    <Icon name="LockClosedIcon" size={14} className="text-indigo-400" />
                   </div>
-                  {badge && (
-                    <span className={`ml-auto text-[10px] uppercase tracking-widest px-2 py-1 ${badge.color}`}>
-                      {badge.label}
-                    </span>
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-zinc-800 flex-shrink-0"></div>
+                )}
+                <div className="flex items-center gap-2 text-xs min-w-0">
+                  <span className="text-white font-medium truncate">
+                    {post.is_incognito ? 'Incognito' : post.author_display_name || post.author_username}
+                  </span>
+                  {!post.is_incognito && (
+                    <span className="text-zinc-600 flex-shrink-0">@{post.author_username}</span>
                   )}
+                  <span className="text-zinc-700 flex-shrink-0">·</span>
+                  <span className="text-zinc-600 flex-shrink-0">{timeAgo(post.created_at)}</span>
                 </div>
+                {/* Post type label — text only per brand */}
+                {POST_TYPE_LABEL[post.post_type] && (
+                  <span className="ml-auto text-[10px] uppercase tracking-widest text-zinc-600 flex-shrink-0">
+                    {POST_TYPE_LABEL[post.post_type]}
+                  </span>
+                )}
+              </div>
 
-                {/* Content */}
-                <Link href={`/post/${post.id}`}>
-                  {post.title && (
-                    <h2 className="font-serif text-xl text-white mb-2 group-hover:text-zinc-200 transition-colors">
-                      {post.title}
-                    </h2>
-                  )}
-                  <p className="text-zinc-400 leading-relaxed text-[15px] mb-6 line-clamp-4">
-                    {post.body}
-                  </p>
+              {/* Content */}
+              <Link href={`/post/${post.id}`}>
+                {post.title && (
+                  <h2 className="font-serif text-xl text-white mb-2 group-hover:text-zinc-200 transition-colors">
+                    {post.title}
+                  </h2>
+                )}
+                <p className="text-zinc-400 leading-relaxed text-[15px] mb-6 line-clamp-4">
+                  {post.body}
+                </p>
+              </Link>
+
+              {/* Incognito note — identity is hidden */}
+              {post.is_incognito && (
+                <p className="text-[10px] uppercase tracking-widest text-indigo-400/60 mb-4">
+                  Identity hidden — Help post
+                </p>
+              )}
+
+              {/* Actions — LowKey-specific, text-driven */}
+              <div className="flex items-center gap-6">
+                {/* Reaction Picker — all 8 types */}
+                <ReactionPicker
+                  postId={post.id}
+                  count={post.reaction_count}
+                  userReaction={post.user_reaction}
+                  onReact={handleReact}
+                />
+
+                {/* Feedback — goes to post detail */}
+                <Link
+                  href={`/post/${post.id}#feedback`}
+                  className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-zinc-600 hover:text-zinc-300 transition-colors"
+                >
+                  <Icon name="ChatBubbleLeftIcon" size={14} />
+                  <span>
+                    {post.feedback_count > 0
+                      ? `${post.feedback_count} feedback`
+                      : 'Give feedback'}
+                  </span>
                 </Link>
 
-                {/* Actions */}
-                <div className="flex items-center gap-8 text-zinc-600">
-                  <button
-                    onClick={() => toggleReact(post.id)}
-                    className={`flex items-center gap-2 transition-colors text-xs ${reacted.has(post.id) ? 'text-red-400 hover:text-red-300' : 'hover:text-white'}`}
-                  >
-                    <Icon name={reacted.has(post.id) ? 'HeartIcon' : 'HeartIcon'} size={16} />
-                    <span>{post.reaction_count || ''}</span>
-                  </button>
-                  <Link href={`/post/${post.id}`} className="flex items-center gap-2 hover:text-white transition-colors text-xs">
-                    <Icon name="ChatBubbleLeftIcon" size={16} />
-                    <span>{post.feedback_count || ''}</span>
-                  </Link>
-                  <button
-                    onClick={() => toggleBookmark(post.id)}
-                    className={`flex items-center gap-2 transition-colors text-xs ${bookmarked.has(post.id) ? 'text-amber-400 hover:text-amber-300' : 'hover:text-white'}`}
-                  >
-                    <Icon name="BookmarkIcon" size={16} />
-                  </button>
-                  <button
-                    onClick={() => navigator.clipboard.writeText(`${window.location.origin}/post/${post.id}`)}
-                    className="ml-auto hover:text-white transition-colors text-xs"
-                    title="Copy link"
-                  >
-                    <Icon name="ShareIcon" size={16} />
-                  </button>
-                </div>
-              </article>
-            );
-          })}
+                {/* Private mark — only visible to user */}
+                <MarkButton
+                  postId={post.id}
+                  activeMark={post.user_mark}
+                  onMark={handleMark}
+                />
+
+                {/* Share */}
+                <button
+                  onClick={() => handleShare(post.id)}
+                  className="ml-auto text-zinc-700 hover:text-zinc-400 transition-colors"
+                  title="Copy link"
+                  aria-label="Copy link to post"
+                >
+                  <Icon name="ShareIcon" size={14} />
+                </button>
+              </div>
+            </article>
+          ))}
         </div>
       )}
     </div>

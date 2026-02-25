@@ -47,6 +47,7 @@ export const GET = withAuth(async (req, { user }) => {
      LEFT JOIN profiles pr ON pr.user_id = u.id
      WHERE p.status = 'published'
        AND p.deleted_at IS NULL
+       AND u.deleted_at IS NULL
        AND p.author_id NOT IN (SELECT blocked_id FROM user_blocks WHERE blocker_id = $1)
        AND p.author_id NOT IN (SELECT blocker_id FROM user_blocks WHERE blocked_id = $1)
        ${whereClause}
@@ -57,8 +58,10 @@ export const GET = withAuth(async (req, { user }) => {
 
     const total = await getOne<{ count: string }>(
         `SELECT COUNT(*) FROM posts p
+     JOIN users u ON u.id = p.author_id
      WHERE p.status = 'published'
        AND p.deleted_at IS NULL
+       AND u.deleted_at IS NULL
        AND p.author_id NOT IN (SELECT blocked_id FROM user_blocks WHERE blocker_id = $1)
        ${whereClause}`,
         [user.id]

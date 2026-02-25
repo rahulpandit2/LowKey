@@ -1,13 +1,13 @@
 import { logger } from '@/lib/logger';
 import { NextRequest } from 'next/server';
-import { getCurrentUser, verifyPassword, hashPassword } from '@/lib/auth';
+import { getAdminCurrentUser, verifyPassword, hashPassword } from '@/lib/auth';
 import { getOne, query } from '@/lib/db';
 import { apiError, apiSuccess } from '@/lib/middleware';
 
 // GET /api/server-admin/profile — get current admin's profile
 export async function GET() {
     try {
-        const user = await getCurrentUser();
+        const user = await getAdminCurrentUser();
         if (!user) return apiError('Unauthorized', 401);
 
         const adminRecord = await getOne<{ admin_role: string; is_active: boolean }>(
@@ -41,7 +41,7 @@ export async function GET() {
 // PATCH /api/server-admin/profile — update profile info or password
 export async function PATCH(req: NextRequest) {
     try {
-        const user = await getCurrentUser();
+        const user = await getAdminCurrentUser();
         if (!user) return apiError('Unauthorized', 401);
 
         const adminRecord = await getOne<{ is_active: boolean }>(

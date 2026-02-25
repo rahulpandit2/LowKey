@@ -47,6 +47,8 @@ export default function PostManagerPage() {
     const [postsList, setPostsList] = useState<OwnPost[]>([]);
     const [loading, setLoading] = useState(true);
     const [totalPosts, setTotalPosts] = useState(0);
+    const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+    const [toast, setToast] = useState('');
 
     useEffect(() => {
         setLoading(true);
@@ -61,14 +63,52 @@ export default function PostManagerPage() {
     }, [filter]);
 
     const handleDelete = (id: string) => {
-        if (!confirm('Delete this post? This cannot be undone.')) return;
+        setConfirmDelete(id);
+    };
+
+    const confirmDeletePost = () => {
+        if (!confirmDelete) return;
+        const id = confirmDelete;
+        setConfirmDelete(null);
         postsApi.delete(id).then(() => {
             setPostsList((prev) => prev.filter((p) => p.id !== id));
+            setTotalPosts((n) => n - 1);
+            setToast('Post deleted.');
+            setTimeout(() => setToast(''), 3000);
         });
     };
 
     return (
         <div className="max-w-3xl mx-auto py-12 px-6">
+            {/* Toast */}
+            {toast && (
+                <div className="fixed top-6 right-6 z-50 px-4 py-3 border border-white/20 bg-black text-white text-sm animate-fade-in shadow-xl">
+                    {toast}
+                </div>
+            )}
+            {/* Confirm Delete Modal */}
+            {confirmDelete && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+                    <div className="border border-white/10 bg-zinc-950 p-8 max-w-sm w-full mx-4">
+                        <h3 className="font-serif text-xl text-white mb-2">Delete post?</h3>
+                        <p className="text-zinc-500 text-sm mb-6">This cannot be undone. The post will be soft-deleted and removed from your feed.</p>
+                        <div className="flex gap-4">
+                            <button
+                                onClick={confirmDeletePost}
+                                className="px-6 py-2.5 bg-red-900 border border-red-500/30 text-red-400 text-xs uppercase tracking-widest hover:bg-red-800 transition-colors"
+                            >
+                                Delete
+                            </button>
+                            <button
+                                onClick={() => setConfirmDelete(null)}
+                                className="px-6 py-2.5 border border-white/10 text-zinc-400 text-xs uppercase tracking-widest hover:text-white hover:border-white/30 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
             {/* Header */}
             <header className="mb-10">
                 <div className="flex items-center gap-4 mb-4">
@@ -94,8 +134,8 @@ export default function PostManagerPage() {
                         key={f.key}
                         onClick={() => setFilter(f.key)}
                         className={`px-5 py-3 text-xs uppercase tracking-widest transition-colors border-b-2 ${filter === f.key
-                                ? 'text-white border-white'
-                                : 'text-zinc-500 border-transparent hover:text-white'
+                            ? 'text-white border-white'
+                            : 'text-zinc-500 border-transparent hover:text-white'
                             }`}
                     >
                         {f.label}
@@ -132,8 +172,8 @@ export default function PostManagerPage() {
                                             <span className="text-[10px] uppercase tracking-widest text-indigo-400 bg-indigo-500/10 px-2 py-0.5">Incognito</span>
                                         )}
                                         <span className={`text-[10px] uppercase tracking-widest px-2 py-0.5 ${post.status === 'published' ? 'text-green-400 bg-green-500/10' :
-                                                post.status === 'draft' ? 'text-amber-400 bg-amber-500/10' :
-                                                    'text-zinc-400 bg-zinc-500/10'
+                                            post.status === 'draft' ? 'text-amber-400 bg-amber-500/10' :
+                                                'text-zinc-400 bg-zinc-500/10'
                                             }`}>
                                             {post.status}
                                         </span>

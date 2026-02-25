@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from 'react';
 
+type SocialLink = { enabled: boolean; url: string };
+type SocialLinks = { github?: SocialLink; x?: SocialLink; linkedin?: SocialLink; instagram?: SocialLink };
+
 type Settings = {
     site_name: string;
     site_tagline: string;
@@ -11,19 +14,31 @@ type Settings = {
     allow_incognito_posts: string;
     require_email_verification: string;
     announcement: string;
+    social_links: string;
 };
 
+const DEFAULT_SETTINGS: Settings = {
+    site_name: 'LowKey',
+    site_tagline: 'The quiet internet.',
+    registration_enabled: 'true',
+    maintenance_mode: 'false',
+    max_post_length: '2000',
+    allow_incognito_posts: 'true',
+    require_email_verification: 'false',
+    announcement: '',
+    social_links: '{}',
+};
+
+const SOCIAL_PLATFORMS = [
+    { key: 'github', label: 'GitHub', placeholder: 'https://github.com/yourorg' },
+    { key: 'x', label: 'X (Twitter)', placeholder: 'https://x.com/yourhandle' },
+    { key: 'linkedin', label: 'LinkedIn', placeholder: 'https://linkedin.com/in/yourprofile' },
+    { key: 'instagram', label: 'Instagram', placeholder: 'https://instagram.com/yourhandle' },
+];
+
 export default function AdminSettingsPage() {
-    const [settings, setSettings] = useState<Settings>({
-        site_name: 'LowKey',
-        site_tagline: 'The quiet internet.',
-        registration_enabled: 'true',
-        maintenance_mode: 'false',
-        max_post_length: '2000',
-        allow_incognito_posts: 'true',
-        require_email_verification: 'false',
-        announcement: '',
-    });
+    const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
+    const [socialLinks, setSocialLinks] = useState<SocialLinks>({});
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [msg, setMsg] = useState('');
@@ -32,7 +47,11 @@ export default function AdminSettingsPage() {
         fetch('/api/server-admin/settings')
             .then((r) => r.ok ? r.json() : null)
             .then((d) => {
-                if (d?.data && Object.keys(d.data).length > 0) setSettings(d.data as Settings);
+                if (d?.data && Object.keys(d.data).length > 0) {
+                    const s = d.data as Settings;
+                    setSettings(s);
+                    try { setSocialLinks(JSON.parse(s.social_links || '{}')); } catch { setSocialLinks({}); }
+                }
                 setLoading(false);
             })
             .catch(() => setLoading(false));
@@ -40,10 +59,11 @@ export default function AdminSettingsPage() {
 
     const save = async () => {
         setSaving(true);
+        const payload = { ...settings, social_links: JSON.stringify(socialLinks) };
         const res = await fetch('/api/server-admin/settings', {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(settings),
+            body: JSON.stringify(payload),
         });
         const data = await res.json();
         setSaving(false);
@@ -53,6 +73,18 @@ export default function AdminSettingsPage() {
 
     const toggle = (key: keyof Settings) =>
         setSettings((s) => ({ ...s, [key]: s[key] === 'true' ? 'false' : 'true' }));
+
+    const toggleSocial = (platform: string) =>
+        setSocialLinks((s) => ({
+            ...s,
+            [platform]: { ...(s[platform as keyof SocialLinks] || { url: '' }), enabled: !(s[platform as keyof SocialLinks]?.enabled) }
+        }));
+
+    const setSocialUrl = (platform: string, url: string) =>
+        setSocialLinks((s) => ({
+            ...s,
+            [platform]: { ...(s[platform as keyof SocialLinks] || { enabled: false }), url }
+        }));
 
     const ToggleRow = ({ label, desc, settingKey }: { label: string; desc: string; settingKey: keyof Settings }) => (
         <div className="flex items-start justify-between py-4 border-b border-white/[0.04]">
@@ -100,6 +132,36 @@ export default function AdminSettingsPage() {
                                 <input type="text" value={settings.site_tagline} onChange={(e) => setSettings(s => ({ ...s, site_tagline: e.target.value }))}
                                     className="w-full bg-transparent border-b border-white/10 py-2 text-white text-sm focus:outline-none focus:border-white/30 transition-colors" />
                             </div>
+                        </div>
+                    </section>
+
+                    {/* Social Links */}
+                    <section>
+                        <h2 className="text-xs uppercase tracking-[0.25em] text-zinc-500 mb-2 pb-2 border-b border-white/[0.05]">Social Links</h2>
+                        <p className="text-xs text-zinc-600 mb-5">Enable a platform and enter its URL. Disabled links won&apos;t appear on the public site.</p>
+                        <div className="space-y-4">
+                            {SOCIAL_PLATFORMS.map((platform) => {
+                                const link = socialLinks[platform.key as keyof SocialLinks];
+                                return (
+                                    <div key={platform.key} className="flex items-center gap-4">
+                                        <button
+                                            onClick={() => toggleSocial(platform.key)}
+                                            className={`w-9 h-5 rounded-full transition-colors relative shrink-0 ${link?.enabled ? 'bg-white' : 'bg-zinc-700'}`}
+                                        >
+                                            <div className={`w-3.5 h-3.5 rounded-full absolute top-[3px] transition-all ${link?.enabled ? 'right-[3px] bg-black' : 'left-[3px] bg-zinc-400'}`} />
+                                        </button>
+                                        <span className="text-sm text-white w-24 shrink-0">{platform.label}</span>
+                                        <input
+                                            type="url"
+                                            value={link?.url || ''}
+                                            onChange={(e) => setSocialUrl(platform.key, e.target.value)}
+                                            placeholder={platform.placeholder}
+                                            disabled={!link?.enabled}
+                                            className="flex-1 bg-transparent border-b border-white/10 py-1.5 text-white text-sm placeholder-zinc-700 focus:outline-none focus:border-white/30 transition-colors disabled:opacity-30"
+                                        />
+                                    </div>
+                                );
+                            })}
                         </div>
                     </section>
 

@@ -15,12 +15,7 @@ export async function query<T extends QueryResultRow = QueryResultRow>(
     text: string,
     params?: unknown[]
 ): Promise<QueryResult<T>> {
-    const start = Date.now();
     const result = await pool.query<T>(text, params);
-    const duration = Date.now() - start;
-    if (process.env.NODE_ENV === 'development') {
-        console.log('[DB]', { text: text.substring(0, 80), duration, rows: result.rowCount });
-    }
     return result;
 }
 

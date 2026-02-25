@@ -98,4 +98,5 @@ export interface CreatePostInput {
     location?: string;
     scheduled_at?: string;
     guided_answers?: Record<string, string>;
+    status?: PostStatus;
 }
