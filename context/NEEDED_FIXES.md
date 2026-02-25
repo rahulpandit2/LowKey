@@ -52,9 +52,6 @@ Does not work. Make it modular to be useful with just UI.
 ## Automation
 Does not work. Make the creating new rule more comprehensive. Allow server admin to automate additional things like send notifications at any scheduled time, send a message to each new user if they have not completed a certain task/or are inactive. Schedule creation of new tasks.
 
-## Integrations
-Does not work. Make it modular to be useful with just UI.
-
 ## Help
 Non functional
 
